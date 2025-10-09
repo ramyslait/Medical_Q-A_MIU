@@ -156,14 +156,14 @@ class HomeController {
       }, 1500);
       return;
     }
-    window.location.href = "pages/ask-question.html";
+    window.location.href = "/ask-question";
   }
 }
 
 // Initialize home controller when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
   if (
-    window.location.pathname.includes("index.html") ||
+    window.location.pathname.includes("/home") ||
     window.location.pathname === "/"
   ) {
     new HomeController();

@@ -59,7 +59,7 @@ MediQ&A is a full-featured medical consultation platform that connects patients 
 
 ### MVC Pattern Implementation
 
-**Models (`assets/js/controllers/`)**:
+**Models (`js/controllers/`)**:
 
 - `UserModel`: Handles user data and authentication
 - `QuestionModel`: Manages question submission and retrieval
@@ -67,14 +67,14 @@ MediQ&A is a full-featured medical consultation platform that connects patients 
 - `ForumModel`: Manages discussion threads and posts
 - `FeedbackModel`: Handles contact form submissions
 
-**Views (`assets/css/`)**:
+**Views (`css/`)**:
 
 - `main.css`: Core styling and layout
 - `components.css`: Reusable UI components
 - Responsive design with CSS Grid and Flexbox
 - Modern medical-themed color palette
 
-**Controllers (`assets/js/controllers/`)**:
+**Controllers (`js/controllers/`)**:
 
 - `authController.js`: Authentication logic and validation
 - `homeController.js`: Home page interactions and animations
@@ -141,7 +141,7 @@ MediQ&A is a full-featured medical consultation platform that connects patients 
 ### Installation
 
 1. Clone or download the project files
-2. Open `index.html` in a web browser
+2. Open `/home` in a web browser
 3. Navigate through the different pages to explore features
 
 ### Demo Accounts
@@ -153,7 +153,7 @@ MediQ&A is a full-featured medical consultation platform that connects patients 
 
 ```
 Medical_Q-A_MIU/
-├── index.html                 # Home page
+├── /home                 # Home page
 ├── pages/                     # Application pages
 │   ├── login.html            # User login
 │   ├── register.html         # User registration
@@ -161,7 +161,7 @@ Medical_Q-A_MIU/
 │   ├── forum.html           # Community forum
 │   ├── admin-dashboard.html  # Admin panel
 │   └── feedback.html        # Contact & feedback
-├── assets/
+├──
 │   ├── css/                 # Stylesheets
 │   │   ├── main.css         # Core styles
 │   │   └── components.css   # Component styles
