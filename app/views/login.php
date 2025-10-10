@@ -1,3 +1,8 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,9 +12,17 @@
   <title>Login - Medical Q&A</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
-  <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    .error-message {
+      color: #ff4d4f;
+      background-color: #ffe6e6;
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+  </style>
 </head>
 
 <body>
@@ -26,7 +39,15 @@
             <p>Sign in to your account to continue</p>
           </div>
 
-          <form class="auth-form needs-validation" id="loginForm">
+          <?php
+          // Display error message from backend if exists
+          if (isset($_SESSION['login_error'])) {
+              echo '<div class="error-message">' . $_SESSION['login_error'] . '</div>';
+              unset($_SESSION['login_error']); // remove message after displaying
+          }
+          ?>
+
+          <form class="auth-form needs-validation" id="loginForm" action="/Medical_Q-A_MIU/app/controllers/loginController.php" method="POST">
             <div class="form-group">
               <label for="email" class="form-label">Email Address</label>
               <input
@@ -67,10 +88,7 @@
               <span>or</span>
             </div>
 
-            <button
-              type="button"
-              class="btn btn-outline w-full"
-              onclick="demoLogin()">
+            <button type="button" class="btn btn-outline w-full" onclick="demoLogin()">
               <i class="fas fa-user-md"></i>
               Demo Login (Admin)
             </button>
@@ -83,16 +101,14 @@
           </div>
         </div>
 
+        <!-- Info Cards -->
         <div class="auth-info">
           <div class="info-card">
             <div class="info-icon">
               <i class="fas fa-shield-alt"></i>
             </div>
             <h3>Secure & Private</h3>
-            <p>
-              Your medical information is protected with enterprise-grade
-              security.
-            </p>
+            <p>Your medical information is protected with enterprise-grade security.</p>
           </div>
 
           <div class="info-card">
@@ -116,49 +132,10 @@
   </main>
 
   <!-- Footer -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <div class="footer-logo">
-            <i class="fas fa-user-md"></i>
-            <span>MediQ&A</span>
-          </div>
-          <p>
-            Your trusted source for accurate medical information and
-            professional healthcare guidance.
-          </p>
-        </div>
-        <div class="footer-section">
-          <h3>Quick Links</h3>
-          <ul>
-            <li><a href="..//home">Home</a></li>
-            <li><a href="ask-question.html">Ask Question</a></li>
-            <li><a href="forum.html">Forum</a></li>
-            <li><a href="feedback.html">Contact</a></li>
-          </ul>
-        </div>
-        <div class="footer-section">
-          <h3>Contact Info</h3>
-          <ul>
-            <li><i class="fas fa-envelope"></i> info@mediqa.com</li>
-            <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
-            <li>
-              <i class="fas fa-map-marker-alt"></i> Medical District, Health
-              City
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; 2024 MediQ&A. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
+  <?php include '../app/partials/footer.php'; ?>
 
   <!-- Scripts -->
   <script src="js/main.js"></script>
-  <script src="<script src=" js/main.js"></script>/js/controllers/authController.js"></script>
   <script>
     // Demo login function
     function demoLogin() {

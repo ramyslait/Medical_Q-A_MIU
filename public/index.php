@@ -14,7 +14,10 @@ $routes = [
     'forum' => '../app/views/forum.php',
     'ask-question' => '../app/views/ask-question.php',
     'feedback' => '../app/views/feedback.php',
-    'admin-dashboard' => '../app/views/admin-dashboard.php'
+    'admin-dashboard' => '../app/views/admin-dashboard.php',
+    'verify-email' => '../app/views/verify-email.php',
+    'logout' => '../app/controllers/logout.php',
+
 ];
 
 if(array_key_exists($uri, $routes)) {

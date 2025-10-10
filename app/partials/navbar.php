@@ -1,14 +1,17 @@
 <?php
-  // Get current request URI (e.g. /Medical_Q-A_MIU/home)
-  $current = $_SERVER['REQUEST_URI'];
+// Get current request URI (e.g. /Medical_Q-A_MIU/home)
+$current = $_SERVER['REQUEST_URI'];
 
-  // Detect your project base path dynamically (e.g. /Medical_Q-A_MIU)
-  $base = dirname($_SERVER['SCRIPT_NAME']);
-  if ($base === '/' || $base === '\\') $base = '';
+// Detect project base path dynamically (e.g. /Medical_Q-A_MIU)
+$base = dirname($_SERVER['SCRIPT_NAME']);
+if ($base === '/' || $base === '\\') $base = '';
 
-  // Normalize URI by removing base path so it becomes /home, /login, etc.
-  $current = str_replace($base, '', $current);
-  $current = rtrim($current, '/'); // remove trailing slash for consistency
+// Normalize URI
+$current = str_replace($base, '', $current);
+$current = rtrim($current, '/'); // remove trailing slash
+
+// Check if user cookie exists
+$user = isset($_COOKIE['user']) ? json_decode($_COOKIE['user'], true) : null;
 ?>
 
 <header class="header">
@@ -29,19 +32,31 @@
         <li class="nav-item">
           <a href="<?= $base ?>/forum" class="nav-link <?= $current == '/forum' ? 'active' : '' ?>">Forum</a>
         </li>
-        <li class="nav-item">
-          <a href="<?= $base ?>/login" class="nav-link <?= $current == '/login' ? 'active' : '' ?>">Login</a>
-        </li>
-        <li class="nav-item">
-          <a href="<?= $base ?>/register" class="nav-link nav-cta <?= $current == '/register' ? 'active' : '' ?>">Sign Up</a>
-        </li>
-      </ul>
 
-      <div class="hamburger">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-      </div>
+        <?php if (!$user): ?>
+          <li class="nav-item">
+            <a href="<?= $base ?>/login" class="nav-link <?= $current == '/login' ? 'active' : '' ?>">Login</a>
+          </li>
+          <li class="nav-item">
+            <a href="<?= $base ?>/register" class="nav-link nav-cta <?= $current == '/register' ? 'active' : '' ?>">Sign Up</a>
+          </li>
+        <?php else: ?>
+          <li class="nav-item">
+            <a href="<?= $base ?>/logout" class="nav-link">Logout</a>
+          </li>
+          <li class="nav-item">
+            <a href="<?= $base ?>/profile" class="nav-link <?= $current == '/profile' ? 'active' : '' ?>">
+              <?= htmlspecialchars($user['name']) ?>
+            </a>
+          </li>
+        <?php endif; ?>
+
+
+        <div class="hamburger">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
     </div>
   </nav>
 </header>
