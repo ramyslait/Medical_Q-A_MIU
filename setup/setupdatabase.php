@@ -15,7 +15,8 @@ try {
             verification_code VARCHAR(6),
             verification_expires_at DATETIME DEFAULT NULL, -- 🕒 expiry time
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            role ENUM('user', 'admin', 'doctor') DEFAULT 'user'
+            role ENUM('user', 'admin', 'doctor') DEFAULT 'user',
+            is_verified TINYINT(1) DEFAULT 0 -- 0 = not verified, 1 = verified
         );
     ";
 
