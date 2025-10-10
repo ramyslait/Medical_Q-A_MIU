@@ -29,8 +29,8 @@
             trustworthy.
           </p>
           <div class="hero-buttons">
-            <a href="/register" class="btn btn-primary">Sign Up Now</a>
-            <a href="/ask-question" class="btn btn-secondary">Submit Question</a>
+            <a href="register" class="btn btn-primary">Sign Up Now</a>
+            <a href="ask-question" class="btn btn-secondary">Submit Question</a>
           </div>
         </div>
         <div class="hero-image">
