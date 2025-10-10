@@ -255,7 +255,7 @@ window.MediQA = {
     this.clearUserData();
     this.showNotification("You have been logged out successfully", "success");
     setTimeout(() => {
-      window.location.href = "index.html";
+      window.location.href = "/home";
     }, 1500);
   },
 
@@ -280,7 +280,7 @@ window.MediQA = {
         "error"
       );
       setTimeout(() => {
-        window.location.href = "index.html";
+        window.location.href = "/home";
       }, 1500);
       return false;
     }

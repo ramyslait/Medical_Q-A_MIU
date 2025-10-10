@@ -47,7 +47,7 @@ class AuthController {
       ) {
         MediQA.showNotification("You are already logged in!", "info");
         setTimeout(() => {
-          window.location.href = "../index.html";
+          window.location.href = "..//home";
         }, 1500);
       }
     }
@@ -91,7 +91,7 @@ class AuthController {
           if (user.role === "admin") {
             window.location.href = "admin-dashboard.html";
           } else {
-            window.location.href = "../index.html";
+            window.location.href = "..//home";
           }
         }, 1500);
       } else {
@@ -144,7 +144,7 @@ class AuthController {
 
       // Redirect to home page
       setTimeout(() => {
-        window.location.href = "../index.html";
+        window.location.href = "..//home";
       }, 1500);
     } catch (error) {
       MediQA.showNotification(error.message, "error");

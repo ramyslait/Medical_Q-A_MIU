@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - Medical Q&A</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet" />
+</head>
+
+<body>
+  <!-- Navigation Header -->
+  <?php include '../app/partials/navbar.php'; ?>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <h1>Join MediQ&A</h1>
+            <p>Create your account to get started</p>
+          </div>
+
+          <form class="auth-form needs-validation" id="registerForm">
+            <div class="form-group">
+              <label for="role" class="form-label">I am a</label>
+              <select id="role" name="role" class="form-select" required>
+                <option value="">Select your role</option>
+                <option value="patient">Patient</option>
+                <option value="provider">Healthcare Provider</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fullName" class="form-label">Full Name</label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                class="form-input"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label for="email" class="form-label">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="form-input"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label for="password" class="form-label">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-input"
+                required
+                minlength="6" />
+              <div class="form-help">Must be at least 6 characters long</div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword" class="form-label">Confirm Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                class="form-input"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" name="terms" required />
+                <span class="checkmark"></span>
+                I agree to the
+                <a href="terms.html" target="_blank">Terms of Service</a> and
+                <a href="privacy.html" target="_blank">Privacy Policy</a>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" name="newsletter" />
+                <span class="checkmark"></span>
+                Subscribe to our newsletter for health tips and updates
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full">
+              <i class="fas fa-user-plus"></i>
+              Create Account
+            </button>
+
+            <div class="auth-divider">
+              <span>or</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-outline w-full"
+              onclick="demoRegister()">
+              <i class="fas fa-user"></i>
+              Demo Register (Patient)
+            </button>
+          </form>
+
+          <div class="auth-footer">
+            <p>
+              Already have an account? <a href="login.html">Sign in here</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="auth-info">
+          <div class="info-card">
+            <div class="info-icon">
+              <i class="fas fa-heart"></i>
+            </div>
+            <h3>Patient Benefits</h3>
+            <ul>
+              <li>Ask medical questions anonymously</li>
+              <li>Get expert answers within hours</li>
+              <li>Access health resources</li>
+              <li>Join supportive community</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <div class="info-icon">
+              <i class="fas fa-user-md"></i>
+            </div>
+            <h3>Provider Benefits</h3>
+            <ul>
+              <li>Help patients with medical guidance</li>
+              <li>Build professional reputation</li>
+              <li>Access to medical resources</li>
+              <li>Continuing education credits</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <div class="info-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3>Privacy & Security</h3>
+            <ul>
+              <li>HIPAA compliant platform</li>
+              <li>Encrypted data transmission</li>
+              <li>Secure user authentication</li>
+              <li>Privacy-first approach</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="footer-logo">
+            <i class="fas fa-user-md"></i>
+            <span>MediQ&A</span>
+          </div>
+          <p>
+            Your trusted source for accurate medical information and
+            professional healthcare guidance.
+          </p>
+        </div>
+        <div class="footer-section">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="..//home">Home</a></li>
+            <li><a href="ask-question.html">Ask Question</a></li>
+            <li><a href="forum.html">Forum</a></li>
+            <li><a href="feedback.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Contact Info</h3>
+          <ul>
+            <li><i class="fas fa-envelope"></i> info@mediqa.com</li>
+            <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+            <li>
+              <i class="fas fa-map-marker-alt"></i> Medical District, Health
+              City
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 MediQ&A. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="<script src=js/controllers/authController.js"></script>
+  <script>
+    // Demo register function
+    function demoRegister() {
+      const demoUser = {
+        id: "demo-patient-001",
+        name: "John Smith",
+        email: "john.smith@example.com",
+        role: "patient",
+        avatar: "https://via.placeholder.com/100",
+        joinDate: "2024-01-15",
+      };
+
+      MediQA.saveUserToStorage(demoUser);
+      MediQA.showNotification(
+        "Demo registration successful! Welcome, John.",
+        "success"
+      );
+      setTimeout(() => {
+        window.location.href = "..//home";
+      }, 1500);
+    }
+  </script>
+</body>
+
+</html>
