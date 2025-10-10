@@ -16,12 +16,14 @@ $routes = [
     'feedback' => '../app/views/feedback.php',
     'admin-dashboard' => '../app/views/admin-dashboard.php',
     'verify-email' => '../app/views/verify-email.php',
+    '404' => '../app/views/404.php',
     'logout' => '../app/controllers/logout.php',
 
 ];
 
-if(array_key_exists($uri, $routes)) {
+if (array_key_exists($uri, $routes)) {
     require_once $routes[$uri];
 } else {
-    echo "404 Page Not Found";  
+    header("Location: /Medical_Q-A_MIU/public/404");
+    exit();
 }
