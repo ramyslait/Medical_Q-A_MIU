@@ -20,5 +20,5 @@ $routes = [
 if(array_key_exists($uri, $routes)) {
     require_once $routes[$uri];
 } else {
-    echo "404 Page Not Found";
+    echo "404 Page Not Found";  
 }

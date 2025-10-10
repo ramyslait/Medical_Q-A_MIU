@@ -177,7 +177,7 @@
         "success"
       );
       setTimeout(() => {
-        window.location.href = "admin-dashboard.html";
+        window.location.href = "admin-dashboard";
       }, 1500);
     }
   </script>

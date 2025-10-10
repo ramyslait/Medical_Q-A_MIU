@@ -26,14 +26,13 @@
             <p>Create your account to get started</p>
           </div>
 
-          <form class="auth-form needs-validation" id="registerForm">
+          <form class="auth-form needs-validation" id="registerForm" action="" method="POST">
             <div class="form-group">
               <label for="role" class="form-label">I am a</label>
               <select id="role" name="role" class="form-select" required>
                 <option value="">Select your role</option>
                 <option value="patient">Patient</option>
                 <option value="provider">Healthcare Provider</option>
-                <option value="admin">Administrator</option>
               </select>
             </div>
 
@@ -54,7 +53,7 @@
                 id="email"
                 name="email"
                 class="form-input"
-                required />
+                  />
             </div>
 
             <div class="form-group">
