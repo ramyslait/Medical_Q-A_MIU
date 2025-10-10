@@ -1,6 +1,6 @@
 # Medical Q&A Platform
 
-A comprehensive medical question and answer platform built with modern web technologies, following strict MVC architecture principles.
+A comprehensive medical question and answer platform built with modern web technologies, following MVC architecture principles.
 
 ## 🏥 Project Overview
 
