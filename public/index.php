@@ -16,6 +16,9 @@ $routes = [
     'feedback' => '../app/views/feedback.php',
     'admin-dashboard' => '../app/views/admin-dashboard.php',
     'verify-email' => '../app/views/verify-email.php',
+    'forgetPassword' => '../app/views/forgetPassword.php',
+    'submitCode' => '../app/views/submitCode.php',
+    'resetPassword' => '../app/views/resetPassword.php',
     '404' => '../app/views/404.php',
     'logout' => '../app/controllers/logout.php',
 

@@ -242,7 +242,7 @@
 
   <!-- Scripts -->
   <script src="js/main.js"></script>
-  <script src="<script src=" js/main.js"></script>/js/controllers/feedbackController.js"></script>
+  <script src="js/controllers/feedbackController.js"></script>
 </body>
 
 </html>

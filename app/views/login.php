@@ -1,7 +1,15 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+  session_start();
 }
+$base = dirname($_SERVER['SCRIPT_NAME']);
+if ($base === '/' || $base === '\\') $base = '';
+
+// Normalize URI
+$current = $_SERVER['REQUEST_URI'];
+$current = str_replace($base, '', $current);
+$current = rtrim($current, '/');
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,8 +50,8 @@ if (session_status() === PHP_SESSION_NONE) {
           <?php
           // Display error message from backend if exists
           if (isset($_SESSION['login_error'])) {
-              echo '<div class="error-message">' . $_SESSION['login_error'] . '</div>';
-              unset($_SESSION['login_error']); // remove message after displaying
+            echo '<div class="error-message">' . $_SESSION['login_error'] . '</div>';
+            unset($_SESSION['login_error']); // remove message after displaying
           }
           ?>
 
@@ -75,7 +83,7 @@ if (session_status() === PHP_SESSION_NONE) {
                   <span class="checkmark"></span>
                   Remember me
                 </label>
-                <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
+                <a href="<?= $base ?>/forgetPassword" class="forgot-link">Forgot Password?</a>
               </div>
             </div>
 
