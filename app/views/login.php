@@ -41,7 +41,7 @@ $current = rtrim($current, '/');
   <main class="main-content">
     <div class="container">
       <div class="auth-container">
-        <div class="auth-card">
+        <div class="auth-card style">
           <div class="auth-header">
             <h1>Welcome Back</h1>
             <p>Sign in to your account to continue</p>

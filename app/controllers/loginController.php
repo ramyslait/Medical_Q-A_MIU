@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 5️⃣ Verify password
     if (!password_verify($password, $user['password'])) {
-        $_SESSION['login_error'] = "❌ Incorrect password. Please try again.";
+        $_SESSION['login_error'] = "❌ Incorrect email or password. Please try again.";
         header("Location: /Medical_Q-A_MIU/public/login");
         exit();
     }
