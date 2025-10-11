@@ -1,8 +1,25 @@
 <?php
 session_start();
 require_once '../../config/db.php';
+require_once '../../vendor/autoload.php';
+
+use Dotenv\Dotenv;
+
+// Load environment variables
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->load();
 
 $pdo = Database::getConnection();
+
+// Encryption key from .env
+$encryption_key = $_ENV['ENCRYPTION_KEY'] ?? '';
+
+function encryptCookie($data, $key)
+{
+    $iv = random_bytes(16); // 16 bytes IV for AES-256-CBC
+    $encrypted = openssl_encrypt(json_encode($data), 'AES-256-CBC', $key, 0, $iv);
+    return base64_encode($iv . $encrypted); // prepend IV
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
@@ -23,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 3️⃣ Fetch user from database
-    $stmt = $pdo->prepare("SELECT id, name, password, is_verified, role FROM users WHERE email = :email");
+    $stmt = $pdo->prepare("SELECT id, name, email, password, is_verified, role FROM users WHERE email = :email");
     $stmt->execute([':email' => $email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -52,17 +69,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['user_email'] = $email;
 
-    // 7️⃣ Set cookie for navbar (3 days)
+    // 7️⃣ Encrypted cookie with only ID + Role
     $cookieData = [
         'id' => $user['id'],
-        'name' => $user['name'],
-        'role' => $user['role'],
-        'email' => $user['email']
+        'role' => $user['role']
     ];
-    setcookie('user', json_encode($cookieData), time() + 3*24*60*60, "/", "", false, true); // 3 days, HttpOnly
+    $encryptedCookie = encryptCookie($cookieData, $encryption_key);
+    setcookie('user', $encryptedCookie, time() + 3 * 24 * 60 * 60, "/", "", false, true); // 3 days, HttpOnly
 
-    // 8️⃣ Redirect to home/dashboard
-    header("Location: /Medical_Q-A_MIU/public/home");
+    // 8️⃣ Redirect based on role
+    if (strtolower($user['role']) === 'admin') {
+        header("Location: /Medical_Q-A_MIU/public/admin-dashboard");
+    } else {
+        header("Location: /Medical_Q-A_MIU/public/home");
+    }
     exit();
 
 } else {

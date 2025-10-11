@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once '../middleware/AuthMiddleware.php';
 
 // Get the requested route
 $uri = isset($_GET['url']) ? $_GET['url'] : 'home';
@@ -19,12 +20,26 @@ $routes = [
     'forgetPassword' => '../app/views/forgetPassword.php',
     'submitCode' => '../app/views/submitCode.php',
     'resetPassword' => '../app/views/resetPassword.php',
-    '404' => '../app/views/404.php',
     'logout' => '../app/controllers/logout.php',
-
+    '404' => '../app/views/404.php'
 ];
 
+// ✅ Check if route exists
 if (array_key_exists($uri, $routes)) {
+    // 🧩 Protect certain routes
+    switch ($uri) {
+        case 'forum':
+        case 'ask-question':
+        case 'feedback':
+            requireAuth(); // Must be logged in
+            break;
+
+        case 'admin-dashboard':
+            requireRole('admin'); // Only admin allowed
+            break;
+    }
+
+    // ✅ Include the requested view
     require_once $routes[$uri];
 } else {
     header("Location: /Medical_Q-A_MIU/public/404");

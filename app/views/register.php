@@ -128,14 +128,6 @@ if (session_status() === PHP_SESSION_NONE) {
             <div class="auth-divider">
               <span>or</span>
             </div>
-
-            <button
-              type="button"
-              class="btn btn-outline w-full"
-              onclick="demoRegister()">
-              <i class="fas fa-user"></i>
-              Demo Register (Patient)
-            </button>
           </form>
 
           <div class="auth-footer">
@@ -197,33 +189,6 @@ if (session_status() === PHP_SESSION_NONE) {
   <!-- Scripts -->
   <script src="js/main.js"></script>
   <script src="js/controllers/authController.js"></script>
-  <script>
-    // Demo register function
-    function demoRegister() {
-      const demoUser = {
-        id: "demo-patient-001",
-        name: "John Smith",
-        email: "john.smith@example.com",
-        role: "patient",
-        avatar: "https://via.placeholder.com/100",
-        joinDate: "2024-01-15",
-      };
-
-      MediQA.saveUserToStorage(demoUser);
-      MediQA.showNotification(
-        "Demo registration successful! Welcome, John.",
-        "success"
-      );
-      setTimeout(() => {
-        window.location.href = "../home";
-      }, 1500);
-    }
-
-    // Auto-hide alerts
-    setTimeout(() => {
-      document.querySelectorAll('.alert').forEach(a => a.remove());
-    }, 5000);
-  </script>
 </body>
 
 </html>

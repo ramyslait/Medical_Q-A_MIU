@@ -210,3 +210,6 @@ This project is created for educational purposes as part of the MIU Medical Q&A 
 ---
 
 **Built with ❤️ for better healthcare accessibility**
+
+
+need to install composer after that need to run composer -install which i like npm and npm i that will install a file called vendor and then make a .env file to have all the variables that connects to the databse and the encrypt the cookie 

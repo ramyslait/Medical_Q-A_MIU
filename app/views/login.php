@@ -95,11 +95,6 @@ $current = rtrim($current, '/');
             <div class="auth-divider">
               <span>or</span>
             </div>
-
-            <button type="button" class="btn btn-outline w-full" onclick="demoLogin()">
-              <i class="fas fa-user-md"></i>
-              Demo Login (Admin)
-            </button>
           </form>
 
           <div class="auth-footer">
@@ -144,28 +139,7 @@ $current = rtrim($current, '/');
 
   <!-- Scripts -->
   <script src="js/main.js"></script>
-  <script>
-    // Demo login function
-    function demoLogin() {
-      const demoUser = {
-        id: "demo-admin-001",
-        name: "Dr. Sarah Johnson",
-        email: "admin@mediqa.com",
-        role: "admin",
-        avatar: "https://via.placeholder.com/100",
-        joinDate: "2024-01-15",
-      };
 
-      MediQA.saveUserToStorage(demoUser);
-      MediQA.showNotification(
-        "Demo login successful! Welcome, Dr. Johnson.",
-        "success"
-      );
-      setTimeout(() => {
-        window.location.href = "admin-dashboard";
-      }, 1500);
-    }
-  </script>
 </body>
 
 </html>
