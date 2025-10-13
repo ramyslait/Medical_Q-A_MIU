@@ -1,5 +1,30 @@
 <?php
 session_start();
+require_once '../middleware/AuthMiddleware.php';
+require_once '../vendor/autoload.php';
+
+use Dotenv\Dotenv;
+
+// Load environment variables
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
+
+// ✅ Global user check (like app.use() in Node.js)
+$user = null;
+if (isset($_COOKIE['user'])) {
+    $user = decryptCookie($_COOKIE['user'], $_ENV['ENCRYPTION_KEY']);
+    if ($user && is_array($user)) {
+        $_SESSION['user'] = $user; // store it for use in views or other controllers
+    } else {
+        unset($_SESSION['user']);
+    }
+} else {
+    unset($_SESSION['user']);
+}
+
+// ----------------------------
+// Routing logic
+// ----------------------------
 
 // Get the requested route
 $uri = isset($_GET['url']) ? $_GET['url'] : 'home';
@@ -19,12 +44,26 @@ $routes = [
     'forgetPassword' => '../app/views/forgetPassword.php',
     'submitCode' => '../app/views/submitCode.php',
     'resetPassword' => '../app/views/resetPassword.php',
-    '404' => '../app/views/404.php',
-    'logout' => '../app/controllers/logout.php',
-
+    'logout' => '../app/controllers/logoutController.php',
+    '404' => '../app/views/404.php'
 ];
 
+// ✅ Check if route exists
 if (array_key_exists($uri, $routes)) {
+    // 🧩 Protect certain routes
+    switch ($uri) {
+        case 'forum':
+        case 'ask-question':
+        case 'feedback':
+            requireAuth(); // Must be logged in
+            break;
+
+        case 'admin-dashboard':
+            requireRole('admin'); // Only admin allowed
+            break;
+    }
+
+    // ✅ Include the requested view
     require_once $routes[$uri];
 } else {
     header("Location: /Medical_Q-A_MIU/public/404");

@@ -1,17 +1,20 @@
 <?php
-// Get current request URI (e.g. /Medical_Q-A_MIU/home)
-$current = $_SERVER['REQUEST_URI'];
+// Ensure session started so we can access $_SESSION['user']
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Detect project base path dynamically (e.g. /Medical_Q-A_MIU)
+// Use the globally stored user from index.php
+$user = $_SESSION['user'] ?? null;
+
+// Detect project base path (e.g. /Medical_Q-A_MIU)
 $base = dirname($_SERVER['SCRIPT_NAME']);
 if ($base === '/' || $base === '\\') $base = '';
 
-// Normalize URI
+// Get current URI
+$current = $_SERVER['REQUEST_URI'];
 $current = str_replace($base, '', $current);
-$current = rtrim($current, '/'); // remove trailing slash
-
-// Check if user cookie exists
-$user = isset($_COOKIE['user']) ? json_decode($_COOKIE['user'], true) : null;
+$current = rtrim($current, '/');
 ?>
 
 <header class="header">
@@ -46,17 +49,17 @@ $user = isset($_COOKIE['user']) ? json_decode($_COOKIE['user'], true) : null;
           </li>
           <li class="nav-item">
             <a href="<?= $base ?>/profile" class="nav-link <?= $current == '/profile' ? 'active' : '' ?>">
-              <?= htmlspecialchars($user['name']) ?>
+              <?= htmlspecialchars($user['name'] ?? 'User') ?>
             </a>
           </li>
         <?php endif; ?>
+      </ul>
 
-
-        <div class="hamburger">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </div>
+      <div class="hamburger">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
     </div>
   </nav>
 </header>

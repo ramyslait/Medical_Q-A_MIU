@@ -1,43 +1,40 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Dotenv\Dotenv;
+
 class Database
 {
     private static $conn = null;
-
-    private static $host = "localhost";
-    private static $user = "root";
-    private static $pass = "";
-    private static $dbname = "mediacal_q-a"; // ⚠️ make sure the name has no typos
 
     public static function getConnection()
     {
         if (self::$conn === null) {
             try {
-                // Step 1: Connect to MySQL server (no DB yet)
-                $tempConn = new PDO(
-                    "mysql:host=" . self::$host,
-                    self::$user,
-                    self::$pass
-                );
+                $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+                $dotenv->load();
+
+                $host = $_ENV['DB_HOST'];
+                $user = $_ENV['DB_USER'];
+                $pass = $_ENV['DB_PASS'];
+                $dbname = $_ENV['DB_NAME'];
+
+                // Connect to MySQL server (no DB yet)
+                $tempConn = new PDO("mysql:host=$host", $user, $pass);
                 $tempConn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-                // Step 2: Create the database if it doesn’t exist
-                $dbName = self::$dbname;
-                $tempConn->exec("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-                $tempConn = null; // Close temporary connection
+                // Create database if not exists
+                $tempConn->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+                $tempConn = null;
 
-                // Step 3: Connect to the database
-                self::$conn = new PDO(
-                    "mysql:host=" . self::$host . ";dbname=" . self::$dbname,
-                    self::$user,
-                    self::$pass
-                );
+                // Connect to the specific database
+                self::$conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
                 self::$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
             } catch (PDOException $e) {
                 die("❌ Database connection failed: " . $e->getMessage());
             }
         }
+
         return self::$conn;
     }
 }
-?>

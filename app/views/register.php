@@ -1,3 +1,8 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,6 +15,8 @@
   <link
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     rel="stylesheet" />
+
+
 </head>
 
 <body>
@@ -26,13 +33,31 @@
             <p>Create your account to get started</p>
           </div>
 
-          <form class="auth-form needs-validation" id="registerForm" action="/Medical_Q-A_MIU/app/controllers/registerController.php" method="POST">
+          <!-- ✅ Display session messages -->
+          <?php if (isset($_SESSION['register_error'])): ?>
+            <div class="alert alert-error">
+              <?= $_SESSION['register_error']; ?>
+            </div>
+            <?php unset($_SESSION['register_error']); ?>
+          <?php endif; ?>
+
+          <?php if (isset($_SESSION['register_success'])): ?>
+            <div class="alert alert-success">
+              <?= $_SESSION['register_success']; ?>
+            </div>
+            <?php unset($_SESSION['register_success']); ?>
+          <?php endif; ?>
+
+          <form class="auth-form needs-validation" id="registerForm"
+            action="/Medical_Q-A_MIU/app/controllers/registerController.php"
+            method="POST">
+
             <div class="form-group">
               <label for="role" class="form-label">I am a</label>
-              <select id="role" name="role" class="form-select" required>
+              <select id="role" name="role" class="form-select">
                 <option value="">Select your role</option>
-                <option value="patient">Patient</option>
-                <option value="provider">Healthcare Provider</option>
+                <option value="patient" <?= (($_SESSION['form_data']['role'] ?? '') === 'patient') ? 'selected' : '' ?>>Patient</option>
+                <option value="provider" <?= (($_SESSION['form_data']['role'] ?? '') === 'provider') ? 'selected' : '' ?>>Healthcare Provider</option>
               </select>
             </div>
 
@@ -43,7 +68,7 @@
                 id="fullName"
                 name="fullName"
                 class="form-input"
-                required />
+                value="<?= htmlspecialchars($_SESSION['form_data']['fullName'] ?? '') ?>" />
             </div>
 
             <div class="form-group">
@@ -53,7 +78,7 @@
                 id="email"
                 name="email"
                 class="form-input"
-                  />
+                value="<?= htmlspecialchars($_SESSION['form_data']['email'] ?? '') ?>" />
             </div>
 
             <div class="form-group">
@@ -63,7 +88,7 @@
                 id="password"
                 name="password"
                 class="form-input"
-                required
+
                 minlength="6" />
               <div class="form-help">Must be at least 6 characters long</div>
             </div>
@@ -74,13 +99,12 @@
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
-                class="form-input"
-                required />
+                class="form-input" />
             </div>
 
             <div class="form-group">
               <label class="checkbox-label">
-                <input type="checkbox" name="terms" required />
+                <input type="checkbox" name="terms" />
                 <span class="checkmark"></span>
                 I agree to the
                 <a href="terms.html" target="_blank">Terms of Service</a> and
@@ -104,21 +128,15 @@
             <div class="auth-divider">
               <span>or</span>
             </div>
-
-            <button
-              type="button"
-              class="btn btn-outline w-full"
-              onclick="demoRegister()">
-              <i class="fas fa-user"></i>
-              Demo Register (Patient)
-            </button>
           </form>
 
           <div class="auth-footer">
             <p>
-              Already have an account? <a href="login.html">Sign in here</a>
+              Already have an account? <a href="login.php">Sign in here</a>
             </p>
           </div>
+
+          <?php unset($_SESSION['form_data']); ?>
         </div>
 
         <div class="auth-info">
@@ -170,29 +188,7 @@
 
   <!-- Scripts -->
   <script src="js/main.js"></script>
-  <script src="<script src=js/controllers/authController.js"></script>
-  <script>
-    // Demo register function
-    function demoRegister() {
-      const demoUser = {
-        id: "demo-patient-001",
-        name: "John Smith",
-        email: "john.smith@example.com",
-        role: "patient",
-        avatar: "https://via.placeholder.com/100",
-        joinDate: "2024-01-15",
-      };
-
-      MediQA.saveUserToStorage(demoUser);
-      MediQA.showNotification(
-        "Demo registration successful! Welcome, John.",
-        "success"
-      );
-      setTimeout(() => {
-        window.location.href = "..//home";
-      }, 1500);
-    }
-  </script>
+  <script src="js/controllers/authController.js"></script>
 </body>
 
 </html>
