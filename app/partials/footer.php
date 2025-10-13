@@ -14,10 +14,10 @@
         <div class="footer-section">
           <h3>Quick Links</h3>
           <ul>
-            <li><a href="/home">Home</a></li>
-            <li><a href="/ask-question">Ask Question</a></li>
-            <li><a href="/forum">Forum</a></li>
-            <li><a href="pages/feedback.html">Contact</a></li>
+            <li><a href="home">Home</a></li>
+            <li><a href="ask-question">Ask Question</a></li>
+            <li><a href="forum">Forum</a></li>
+            <li><a href="feedback.html">Contact</a></li>
           </ul>
         </div>
         <div class="footer-section">

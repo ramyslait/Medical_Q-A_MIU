@@ -1,6 +1,6 @@
 <?php
 // Check if user cookie exists
-$user = isset($_COOKIE['user']) ? json_decode($_COOKIE['user'], true) : null;
+$user = $_SESSION['user'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">

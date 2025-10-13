@@ -72,7 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 7️⃣ Encrypted cookie with only ID + Role
     $cookieData = [
         'id' => $user['id'],
-        'role' => $user['role']
+        'role' => $user['role'],
+        'name' => $user['name']
     ];
     $encryptedCookie = encryptCookie($cookieData, $encryption_key);
     setcookie('user', $encryptedCookie, time() + 3 * 24 * 60 * 60, "/", "", false, true); // 3 days, HttpOnly
