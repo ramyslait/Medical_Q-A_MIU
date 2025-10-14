@@ -142,3 +142,18 @@ body.dark {
   color: var(--text-secondary);
 }
 
+/* Ensure stats section content is readable and underlined in dark mode */
+.dark .stats .stat-item .stat-number {
+  color: #ffffff;
+  display: inline-block !important;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  padding-bottom: 6px !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.9) !important; /* single white underline */
+}
+
+.dark .stats .stat-label {
+  color: rgba(255, 255, 255, 0.9);
+  display: block;
+}
+

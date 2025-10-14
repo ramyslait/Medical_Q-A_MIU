@@ -11,6 +11,7 @@
     <link
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         rel="stylesheet" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <style>
         /* Center 404 content vertically & horizontally */
         .hero-404 {

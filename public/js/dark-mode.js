@@ -94,7 +94,8 @@
     if (document.getElementById("light-cta-override")) return;
     var css =
       ':root:not(.dark) .nav-cta{background-color:var(--primary-color);color:#ffffff!important;}' +
-      ':root:not(.dark) .nav-cta:hover,:root:not(.dark) .nav-cta.active{background-color:var(--primary-dark);color:#ffffff!important;}';
+      ':root:not(.dark) .nav-cta:hover,:root:not(.dark) .nav-cta.active{background-color:var(--primary-dark);color:#ffffff!important;}' +
+      ':root:not(.dark) .stats .stat-item .stat-number{color:#ffffff!important;display:inline-block!important;margin-bottom:0.5rem;font-weight:700;padding-bottom:6px!important;border-bottom:2px solid rgba(255,255,255,0.9)!important;}';
     var style = document.createElement("style");
     style.id = "light-cta-override";
     style.appendChild(document.createTextNode(css));
