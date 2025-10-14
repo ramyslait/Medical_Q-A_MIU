@@ -55,6 +55,10 @@ $current = rtrim($current, '/');
         <?php endif; ?>
       </ul>
 
+      <button id="theme-toggle" type="button" class="nav-link" aria-pressed="false" title="Switch to dark mode">
+        <i class="fas fa-sun"></i>
+      </button>
+
       <div class="hamburger">
         <span class="bar"></span>
         <span class="bar"></span>
@@ -63,3 +67,4 @@ $current = rtrim($current, '/');
     </div>
   </nav>
 </header>
+<script src="js/dark-mode.js"></script>

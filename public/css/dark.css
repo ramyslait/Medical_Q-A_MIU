@@ -1,0 +1,144 @@
+/* Dark theme overrides using CSS variables */
+:root.dark {
+  --bg-primary: #0b1220;
+  --bg-secondary: #111a2e;
+  --bg-accent: #0f1b33;
+  --text-primary: #e6eaf3;
+  --text-secondary: #aab3c5;
+  --text-light: #7b86a2;
+  --border-color: #24304a;
+
+  --primary-color: #60a5fa;
+  --primary-dark: #3b82f6;
+  --secondary-color: #34d399;
+  --secondary-dark: #10b981;
+  --accent-color: #22d3ee;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Component-specific fixes for dark background contrast */
+body.dark {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.footer {
+  background-color: #0a0f1c;
+}
+
+.dropdown-menu {
+  background: var(--bg-primary);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background-color: rgba(59, 130, 246, 0.12);
+}
+
+/* Keep Sign Up (nav-cta) as a solid primary button in dark mode */
+.dark .nav-cta {
+  background-color: var(--primary-color);
+  color: #ffffff !important;
+}
+
+.dark .nav-cta:hover,
+.dark .nav-cta:focus {
+  background-color: var(--primary-dark);
+  color: #ffffff !important;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.loading-overlay {
+  background-color: rgba(11, 18, 32, 0.8);
+}
+
+/* Theme toggle button appearance in dark mode */
+.dark #theme-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.dark #theme-toggle:hover {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: var(--primary-color);
+}
+
+/* Form inputs and labels for authentication pages */
+.dark .form-label {
+  color: var(--text-primary);
+}
+
+.dark .form-input,
+.dark .form-select,
+.dark .form-textarea {
+  background-color: #0e1729;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.dark .form-input::placeholder,
+.dark .form-textarea::placeholder {
+  color: var(--text-light);
+}
+
+.dark .auth-card,
+.dark .card,
+.dark .question-form,
+.dark .question-guidelines,
+.dark .filter-card,
+.dark .stats-card,
+.dark .contact-card,
+.dark .info-card,
+.dark .faq-card {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.dark .card-header,
+.dark .card-footer,
+.dark .modal-header,
+.dark .modal-footer,
+.dark .table th,
+.dark .response-item {
+  background-color: var(--bg-secondary);
+}
+
+.dark .nav-logo,
+.dark .nav-link,
+.dark .page-title,
+.dark .section-title,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: var(--text-primary);
+}
+
+.dark p,
+.dark .question-preview,
+.dark .discussion-preview,
+.dark .page-header p,
+.dark .auth-header p,
+.dark .form-help,
+.dark .user-email,
+.dark .discussion-meta,
+.dark .question-date {
+  color: var(--text-secondary);
+}
+
