@@ -1,6 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+  session_start();
 }
 
 $user = $_SESSION['user'] ?? null;
@@ -51,8 +51,15 @@ $currentPage = basename($current);
               <?= htmlspecialchars($user['name'] ?? 'User') ?>
             </a>
           </li>
+
         <?php endif; ?>
+        <li id="theme-toggle" type="button" class="nav-link" aria-pressed="false" title="Switch to dark mode">
+          <a><i class="fas fa-sun"></i></a>
+        </li>
+
       </ul>
+
+
 
       <div class="hamburger">
         <span class="bar"></span>
@@ -62,3 +69,4 @@ $currentPage = basename($current);
     </div>
   </nav>
 </header>
+<script src="js/dark-mode.js"></script>

@@ -99,7 +99,7 @@ $current = rtrim($current, '/');
 
           <div class="auth-footer">
             <p>
-              Don't have an account? <a href="register.html">Sign up here</a>
+              Don't have an account? <a href="register">Sign up here</a>
             </p>
           </div>
         </div>
