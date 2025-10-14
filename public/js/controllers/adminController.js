@@ -63,26 +63,32 @@ class AdminController {
   }
 
   async loadDashboardData() {
-    try {
-      // Load dashboard statistics
-      const stats = await this.adminModel.getDashboardStats();
-      this.dashboardView.updateStats(stats);
+  fetch('api/getUsersCount.php', { credentials: 'same-origin' })
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      const el = document.getElementById('userCount');
+      const el1 = document.getElementById('userCount1');
+      if (!el || !el1) return;
+      if (data && data.success) {
+        el.textContent = Number(data.count).toLocaleString();
+        el1.textContent = Number(data.count).toLocaleString();
+      } else {
+        console.error('Error:', data && data.error);
+        el.textContent = '—';
+        el1.textContent = '—';
+      }
+    })
+    .catch(err => {
+      console.error('Fetch error:', err);
+      const el = document.getElementById('userCount');
+      if (el) el.textContent = '—';
+    });
 
-      // Load recent activity
-      const activity = await this.adminModel.getRecentActivity();
-      this.dashboardView.updateRecentActivity(activity);
+}
 
-      // Load user data
-      const users = await this.adminModel.getUsers();
-      this.dashboardView.updateUsersTable(users);
-
-      // Load questions data
-      const questions = await this.adminModel.getQuestions();
-      this.dashboardView.updateQuestionsGrid(questions);
-    } catch (error) {
-      MediQA.showNotification("Failed to load dashboard data", "error");
-    }
-  }
 
   showSection(sectionName) {
     // Hide all sections
@@ -148,14 +154,31 @@ class AdminController {
     }
   }
 
-  async loadUsersData() {
-    try {
-      const users = await this.adminModel.getUsers();
-      this.dashboardView.updateUsersTable(users);
-    } catch (error) {
-      MediQA.showNotification("Failed to load users data", "error");
+async loadUsersData() {
+  try {
+    const response = await fetch('api/getUsers.php', { credentials: 'same-origin' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+
+    if (data.success && Array.isArray(data.users)) {
+      const normalizedUsers = data.users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        status: u.status,
+        joinDate: u.joinDate || u.join_date || u.joined_at || null,
+        avatar: u.avatar || 'https://via.placeholder.com/40/06b6d4/ffffff?text=U',
+      }));
+      this.dashboardView.updateUsersTable(normalizedUsers);
+    } else {
+      console.error('Error fetching users:', data.error);
     }
+  } catch (err) {
+    console.error('Fetch error:', err);
   }
+}
+
 
   async loadQuestionsData() {
     try {
@@ -623,3 +646,5 @@ document.addEventListener("DOMContentLoaded", function () {
     new AdminController();
   }
 });
+
+

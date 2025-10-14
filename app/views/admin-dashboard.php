@@ -23,6 +23,7 @@
   </script>
 
 
+
   <link
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     rel="stylesheet" />
@@ -59,7 +60,7 @@
           <a href="#users" class="sidebar-link" data-section="users">
             <i class="fas fa-users"></i>
             <span>Users</span>
-            <span class="badge badge-info">1,234</span>
+            <span id="userCount1" class="badge badge-info">1,234</span>
           </a>
         </li>
         <li class="sidebar-item">
@@ -148,10 +149,6 @@
       <section class="dashboard-section active" id="dashboard-section">
         <div class="section-header">
           <h2>Overview</h2>
-          <p>
-            Welcome back, Dr. Johnson. Here's what's happening with your
-            platform today.
-          </p>
         </div>
 
         <!-- Stats Cards -->
@@ -161,7 +158,7 @@
               <i class="fas fa-users"></i>
             </div>
             <div class="stat-content">
-              <div class="stat-number">1,234</div>
+              <p id="userCount" class="stat-number"></p>
               <div class="stat-label">Total Users</div>
               <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
@@ -306,48 +303,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <div class="user-cell">
-                    <img
-                      src="https://via.placeholder.com/40/2563eb/ffffff?text=SA"
-                      alt="Avatar"
-                      class="user-avatar-small" />
-                    <div>
-                      <div class="user-name">Dr. Sarah Johnson</div>
-                      <div class="user-email">sarah.johnson@hospital.com</div>
-                    </div>
-                  </div>
-                </td>
-                <td><span class="badge badge-info">Admin</span></td>
-                <td><span class="badge badge-success">Active</span></td>
-                <td>Jan 15, 2024</td>
-                <td>
-                  <button class="btn btn-small btn-outline">Edit</button>
-                  <button class="btn btn-small btn-danger">Suspend</button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="user-cell">
-                    <img
-                      src="https://via.placeholder.com/40/059669/ffffff?text=MC"
-                      alt="Avatar"
-                      class="user-avatar-small" />
-                    <div>
-                      <div class="user-name">Dr. Michael Chen</div>
-                      <div class="user-email">michael.chen@clinic.com</div>
-                    </div>
-                  </div>
-                </td>
-                <td><span class="badge badge-warning">Provider</span></td>
-                <td><span class="badge badge-success">Active</span></td>
-                <td>Jan 20, 2024</td>
-                <td>
-                  <button class="btn btn-small btn-outline">Edit</button>
-                  <button class="btn btn-small btn-danger">Suspend</button>
-                </td>
-              </tr>
+              
             </tbody>
           </table>
         </div>
