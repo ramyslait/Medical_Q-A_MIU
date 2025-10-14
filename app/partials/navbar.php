@@ -1,7 +1,7 @@
 <?php
 // Ensure session started so we can access $_SESSION['user']
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+  session_start();
 }
 
 // Use the globally stored user from index.php
@@ -52,12 +52,15 @@ $current = rtrim($current, '/');
               <?= htmlspecialchars($user['name'] ?? 'User') ?>
             </a>
           </li>
+
         <?php endif; ?>
+        <li id="theme-toggle" type="button" class="nav-link" aria-pressed="false" title="Switch to dark mode">
+          <a><i class="fas fa-sun"></i></a>
+        </li>
+
       </ul>
 
-      <button id="theme-toggle" type="button" class="nav-link" aria-pressed="false" title="Switch to dark mode">
-        <i class="fas fa-sun"></i>
-      </button>
+
 
       <div class="hamburger">
         <span class="bar"></span>
