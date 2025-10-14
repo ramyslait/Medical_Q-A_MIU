@@ -7,12 +7,29 @@
   <title>Admin Dashboard - Medical Q&A</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
+   <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/controllers/adminController.js"></script>
+
+  <?php if (session_status() === PHP_SESSION_NONE) { session_start(); } $user = $_SESSION['user'] ?? null; ?>
+  <script>
+    // Bridge server session -> client state so client-side auth doesn't misfire
+    window.MediQA = window.MediQA || {};
+    <?php if ($user): ?>
+    MediQA.currentUser = <?php echo json_encode($user); ?>;
+    MediQA.isLoggedIn = true;
+    MediQA.userRole = <?php echo json_encode($user['role'] ?? null); ?>;
+    <?php endif; ?>
+  </script>
+
+
   <link
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     rel="stylesheet" />
 </head>
 
 <body class="dashboard-body">
+
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -390,9 +407,7 @@
     </div>
   </main>
 
-  <!-- Scripts -->
-  <script src="js/main.js"></script>
-  <script src="js/controllers/adminController.js"></script>
+ 
 </body>
 
 </html>
