@@ -618,7 +618,8 @@ window.viewQuestion = function (questionId) {
 
 // Initialize admin controller when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
-  if (window.location.pathname.includes("admin-dashboard.html")) {
+  // Initialize on admin dashboard page rendered via PHP route
+  if (document.body && document.body.classList.contains("dashboard-body")) {
     new AdminController();
   }
 });

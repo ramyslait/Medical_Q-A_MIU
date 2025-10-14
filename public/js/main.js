@@ -264,7 +264,7 @@ window.MediQA = {
     if (!this.isLoggedIn) {
       this.showNotification("Please log in to access this page", "warning");
       setTimeout(() => {
-        window.location.href = "pages/login.html";
+        window.location.href = "/login";
       }, 1500);
       return false;
     }
