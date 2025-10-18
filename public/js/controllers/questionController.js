@@ -48,8 +48,7 @@ class QuestionController {
   }
 
   async handleQuestionSubmission(e) {
-    e.preventDefault();
-
+    // Validate form data before submission
     const formData = new FormData(e.target);
     const questionData = {
       title: formData.get("questionTitle"),
@@ -74,18 +73,11 @@ class QuestionController {
       submitBtn.innerHTML = '<span class="loading"></span> Submitting...';
       submitBtn.disabled = true;
 
-      // Simulate API call
-      await this.simulateDelay();
-
-      // Submit question
-      const question = await this.questionModel.submitQuestion(questionData);
-
-      // Clear draft
-      this.clearDraft();
-
-      // Show success state
-      this.questionView.showSubmissionSuccess(question);
+      // Let the form submit naturally to the PHP backend
+      // The form will be submitted to the server and handled by questionController.php
+      
     } catch (error) {
+      e.preventDefault(); // Only prevent default if validation fails
       MediQA.showNotification(error.message, "error");
       this.resetSubmitButton(e.target);
     }

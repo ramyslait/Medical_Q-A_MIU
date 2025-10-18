@@ -66,7 +66,7 @@
           <a href="#questions" class="sidebar-link" data-section="questions">
             <i class="fas fa-question-circle"></i>
             <span>Questions</span>
-            <span class="badge badge-warning">45</span>
+            <span id="questionCount" class="badge badge-warning">0</span>
           </a>
         </li>
         <li class="sidebar-item">
@@ -171,11 +171,11 @@
               <i class="fas fa-question-circle"></i>
             </div>
             <div class="stat-content">
-              <div class="stat-number">45</div>
+              <div id="pendingQuestionsCount" class="stat-number">0</div>
               <div class="stat-label">Pending Questions</div>
               <div class="stat-change negative">
                 <i class="fas fa-arrow-up"></i>
-                +5 today
+                <span id="pendingQuestionsChange">+0 today</span>
               </div>
             </div>
           </div>
@@ -316,45 +316,10 @@
         </div>
 
         <div class="questions-grid">
-          <div class="question-card">
-            <div class="question-header">
-              <h4>Persistent headache for 3 days</h4>
-              <span class="badge badge-warning">Pending</span>
-            </div>
-            <div class="question-meta">
-              <span class="question-category">Symptoms</span>
-              <span class="question-date">2 hours ago</span>
-            </div>
-            <p class="question-preview">
-              I've been experiencing a constant headache for the past 3 days.
-              It's mostly on the left side of my head and gets worse when I
-              move around...
-            </p>
-            <div class="question-actions">
-              <button class="btn btn-small btn-primary">
-                Assign to Provider
-              </button>
-              <button class="btn btn-small btn-outline">View Details</button>
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-header">
-              <h4>Medication side effects</h4>
-              <span class="badge badge-success">Answered</span>
-            </div>
-            <div class="question-meta">
-              <span class="question-category">Treatments</span>
-              <span class="question-date">1 day ago</span>
-            </div>
-            <p class="question-preview">
-              I started taking a new medication last week and I'm experiencing
-              some side effects. Should I be concerned?
-            </p>
-            <div class="question-actions">
-              <button class="btn btn-small btn-outline">View Answer</button>
-              <button class="btn btn-small btn-success">Mark Resolved</button>
-            </div>
+          <!-- Questions will be loaded dynamically here -->
+          <div class="loading-placeholder">
+            <div class="spinner"></div>
+            <p>Loading questions...</p>
           </div>
         </div>
       </section>
