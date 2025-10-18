@@ -28,7 +28,6 @@ if (isset($_COOKIE['user'])) {
 
 // Get the requested route
 $uri = isset($_GET['url']) ? $_GET['url'] : 'home';
-$uri = rtrim($uri, '/');
 
 // Define routes
 $routes = [
