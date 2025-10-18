@@ -87,6 +87,8 @@ class AdminController {
       if (el) el.textContent = '—';
     });
 
+  // Load question count
+  this.loadQuestionsCount();
 }
 
 
@@ -189,6 +191,15 @@ async loadUsersData() {
     }
   }
 
+  async loadQuestionsCount() {
+    try {
+      const counts = await this.adminModel.getQuestionsCount();
+      this.dashboardView.updateQuestionCount(counts);
+    } catch (error) {
+      console.error("Failed to load question counts:", error);
+    }
+  }
+
   async loadAnalyticsData() {
     try {
       const analytics = await this.adminModel.getAnalytics();
@@ -234,6 +245,49 @@ async loadUsersData() {
     // Show notifications modal or dropdown
     const notifications = this.adminModel.getNotifications();
     this.dashboardView.showNotificationsModal(notifications);
+  }
+
+  // Question management functions
+  assignQuestion(questionId) {
+    // TODO: Implement assign question functionality
+    MediQA.showNotification(`Assigning question ${questionId} to provider...`, "info");
+  }
+
+  viewQuestion(questionId) {
+    // TODO: Implement view question details functionality
+    MediQA.showNotification(`Viewing question ${questionId} details...`, "info");
+  }
+
+  markResolved(questionId) {
+    // TODO: Implement mark question as resolved functionality
+    MediQA.showNotification(`Marking question ${questionId} as resolved...`, "info");
+  }
+}
+
+// Make question management functions globally available
+let adminControllerInstance = null;
+
+// Initialize admin controller when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  adminControllerInstance = new AdminController();
+});
+
+// Global functions for HTML onclick handlers
+function assignQuestion(questionId) {
+  if (adminControllerInstance) {
+    adminControllerInstance.assignQuestion(questionId);
+  }
+}
+
+function viewQuestion(questionId) {
+  if (adminControllerInstance) {
+    adminControllerInstance.viewQuestion(questionId);
+  }
+}
+
+function markResolved(questionId) {
+  if (adminControllerInstance) {
+    adminControllerInstance.markResolved(questionId);
   }
 }
 
@@ -342,8 +396,37 @@ class AdminModel {
   }
 
   async getQuestions() {
-    await this.simulateDelay();
-    return this.dummyData.questions;
+    try {
+      const response = await fetch('/Medical_Q-A_MIU/public/api/getQuestions.php');
+      const data = await response.json();
+      
+      if (data.success) {
+        return data.questions;
+      } else {
+        throw new Error(data.error || 'Failed to fetch questions');
+      }
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      // Fallback to dummy data if API fails
+      await this.simulateDelay();
+      return this.dummyData.questions;
+    }
+  }
+
+  async getQuestionsCount() {
+    try {
+      const response = await fetch('/Medical_Q-A_MIU/public/api/getQuestionsCount.php');
+      const data = await response.json();
+      
+      if (data.success) {
+        return data.counts;
+      } else {
+        throw new Error(data.error || 'Failed to fetch question counts');
+      }
+    } catch (error) {
+      console.error('Error fetching question counts:', error);
+      return { total: 0, pending: 0, answered: 0, closed: 0 };
+    }
   }
 
   async getRecentActivity() {
@@ -527,16 +610,20 @@ class DashboardView {
                     <div class="question-header">
                         <h4>${question.title}</h4>
                         <span class="badge badge-${
-                          question.status === "pending" ? "warning" : "success"
-                        }">${question.status}</span>
+                          question.status === "pending" ? "warning" : 
+                          question.status === "answered" ? "success" : "secondary"
+                        }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
                     </div>
                     <div class="question-meta">
                         <span class="question-category">${
-                          question.category
+                          question.category.charAt(0).toUpperCase() + question.category.slice(1)
                         }</span>
-                        <span class="question-date">${question.date}</span>
+                        <span class="question-date">${question.time_ago}</span>
                     </div>
                     <p class="question-preview">${question.preview}</p>
+                    <div class="question-user-info">
+                        <small>Asked by: ${question.user_name || 'Anonymous'}</small>
+                    </div>
                     <div class="question-actions">
                         <button class="btn btn-small btn-primary" onclick="assignQuestion('${
                           question.id
@@ -544,11 +631,42 @@ class DashboardView {
                         <button class="btn btn-small btn-outline" onclick="viewQuestion('${
                           question.id
                         }')">View Details</button>
+                        ${question.status === 'answered' ? 
+                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + question.id + '\')">Mark Resolved</button>' : 
+                          ''
+                        }
                     </div>
                 </div>
             `
         )
         .join("");
+    }
+  }
+
+  updateQuestionCount(counts) {
+    // Update sidebar badge
+    const questionCountElement = document.getElementById('questionCount');
+    if (questionCountElement) {
+      questionCountElement.textContent = counts.total;
+      
+      // Update badge color based on pending questions
+      questionCountElement.className = 'badge ' + 
+        (counts.pending > 0 ? 'badge-warning' : 'badge-success');
+    }
+
+    // Update stat card
+    const pendingCountElement = document.getElementById('pendingQuestionsCount');
+    if (pendingCountElement) {
+      pendingCountElement.textContent = counts.pending;
+    }
+
+    // Update stat change (simplified - in real app you'd calculate daily change)
+    const pendingChangeElement = document.getElementById('pendingQuestionsChange');
+    if (pendingChangeElement) {
+      const changeText = counts.pending > 0 ? 
+        `+${counts.pending} pending` : 
+        'All answered!';
+      pendingChangeElement.textContent = changeText;
     }
   }
 

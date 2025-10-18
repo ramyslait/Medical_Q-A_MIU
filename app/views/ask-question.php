@@ -27,8 +27,23 @@
         </p>
       </div>
 
+      <!-- Display error/success messages -->
+      <?php if (isset($_SESSION['question_error'])): ?>
+        <div class="alert alert-error">
+          <?= htmlspecialchars($_SESSION['question_error']) ?>
+        </div>
+        <?php unset($_SESSION['question_error']); ?>
+      <?php endif; ?>
+
+      <?php if (isset($_SESSION['question_success'])): ?>
+        <div class="alert alert-success">
+          <?= htmlspecialchars($_SESSION['question_success']) ?>
+        </div>
+        <?php unset($_SESSION['question_success']); ?>
+      <?php endif; ?>
+
       <div class="question-form-container">
-        <form class="question-form needs-validation" id="questionForm">
+        <form class="question-form needs-validation" id="questionForm" action="submit-question" method="POST">
           <div class="form-section">
             <h3><i class="fas fa-edit"></i> Question Details</h3>
 
@@ -40,6 +55,7 @@
                 name="questionTitle"
                 class="form-input"
                 placeholder="Brief description of your question"
+                value="<?= htmlspecialchars($_SESSION['question_form_data']['questionTitle'] ?? '') ?>"
                 required />
               <div class="form-help">Keep it concise and descriptive</div>
             </div>
@@ -52,13 +68,13 @@
                 class="form-select"
                 required>
                 <option value="">Select a category</option>
-                <option value="symptoms">Symptoms</option>
-                <option value="treatments">Treatments</option>
-                <option value="drugs">Drugs & Medications</option>
-                <option value="preventive">Preventive Care</option>
-                <option value="diagnosis">Diagnosis</option>
-                <option value="emergency">Emergency</option>
-                <option value="other">Other</option>
+                <option value="symptoms" <?= ($_SESSION['question_form_data']['questionCategory'] ?? '') === 'symptoms' ? 'selected' : '' ?>>Symptoms</option>
+                <option value="treatments" <?= ($_SESSION['question_form_data']['questionCategory'] ?? '') === 'treatments' ? 'selected' : '' ?>>Treatments</option>
+                <option value="drugs" <?= ($_SESSION['question_form_data']['questionCategory'] ?? '') === 'drugs' ? 'selected' : '' ?>>Drugs & Medications</option>
+                <option value="preventive" <?= ($_SESSION['question_form_data']['questionCategory'] ?? '') === 'preventive' ? 'selected' : '' ?>>Preventive Care</option>
+                <option value="diagnosis" <?= ($_SESSION['question_form_data']['questionCategory'] ?? '') === 'diagnosis' ? 'selected' : '' ?>>Diagnosis</option>
+                <option value="emergency" <?= ($_SESSION['question_form_data']['questionCategory'] ?? '') === 'emergency' ? 'selected' : '' ?>>Emergency</option>
+                <option value="other" <?= ($_SESSION['question_form_data']['questionCategory'] ?? '') === 'other' ? 'selected' : '' ?>>Other</option>
               </select>
             </div>
 
@@ -74,7 +90,7 @@
 • Any medications you're taking
 • Relevant medical history
 • Any specific questions you have"
-                required></textarea>
+                required><?= htmlspecialchars($_SESSION['question_form_data']['questionDescription'] ?? '') ?></textarea>
               <div class="form-help">
                 The more details you provide, the better our experts can help
                 you

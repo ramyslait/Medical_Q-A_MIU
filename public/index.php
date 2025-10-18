@@ -37,6 +37,7 @@ $routes = [
     'register' => '../app/views/register.php',
     'forum' => '../app/views/forum.php',
     'ask-question' => '../app/views/ask-question.php',
+    'submit-question' => '../app/controllers/questionController.php',
     'feedback' => '../app/views/feedback.php',
     'admin-dashboard' => '../app/views/admin-dashboard.php',
     'verify-email' => '../app/views/verify-email.php',
