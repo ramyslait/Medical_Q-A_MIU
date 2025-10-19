@@ -3,12 +3,23 @@
 require_once __DIR__ . '/../PHPMailer-master/src/PHPMailer.php';
 require_once __DIR__ . '/../PHPMailer-master/src/SMTP.php';
 require_once __DIR__ . '/../PHPMailer-master/src/Exception.php';
+require_once '../../vendor/autoload.php';
 
+use Dotenv\Dotenv;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Load environment variables
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
+
+$EMAIL = $_ENV['MAIL_USERNAME'];
+$PASSWORD = $_ENV['MAIL_PASSWORD'];
+
 function sendVerificationEmail($recipientEmail, $recipientName, $verificationCode)
 {
+    global $EMAIL, $PASSWORD;
+
     $mail = new PHPMailer(true);
 
     try {
@@ -16,13 +27,13 @@ function sendVerificationEmail($recipientEmail, $recipientName, $verificationCod
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'nabilramy2005@gmail.com'; // ✅ Replace with your Gmail
-        $mail->Password   = 'sfqr flpk flsk vpxm'; // ✅ Use an app password, not your real one
+        $mail->Username   = $EMAIL;
+        $mail->Password   = $PASSWORD;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         // Sender & recipient
-        $mail->setFrom('your_email@gmail.com', 'MediQ&A');
+        $mail->setFrom($EMAIL, 'MediQ&A');
         $mail->addAddress($recipientEmail, $recipientName);
 
         // Email content
@@ -44,8 +55,11 @@ function sendVerificationEmail($recipientEmail, $recipientName, $verificationCod
         return false;
     }
 }
+
 function sendResetPasswordCode($recipientEmail, $recipientName, $resetCode)
 {
+    global $EMAIL, $PASSWORD;
+
     $mail = new PHPMailer(true);
 
     try {
@@ -53,13 +67,13 @@ function sendResetPasswordCode($recipientEmail, $recipientName, $resetCode)
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'nabilramy2005@gmail.com'; // ✅ Replace with your Gmail
-        $mail->Password   = 'sfqr flpk flsk vpxm';     // ✅ Use app password
+        $mail->Username   = $EMAIL;
+        $mail->Password   = $PASSWORD;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         // Sender & recipient
-        $mail->setFrom('nabilramy2005@gmail.com', 'MediQ&A');
+        $mail->setFrom($EMAIL, 'MediQ&A');
         $mail->addAddress($recipientEmail, $recipientName);
 
         // Email content
