@@ -37,7 +37,7 @@ function generate_ai_answer($prompt)
         return false;
     }
 
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $apiKey;
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $apiKey;
 
     // Prepend system message to prompt
     $fullPrompt = 'You are a helpful, conservative medical assistant. Provide clear, evidence-based information, include a short safety disclaimer, and avoid giving definitive diagnoses. Keep the tone professional.' . "\n\n" . $prompt;
