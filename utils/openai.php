@@ -1,5 +1,5 @@
 <?php
-// Simple OpenAI helper. Reads OPENAI_API_KEY from project .env (if present)
+// Simple Gemini helper. Reads OPENAI_API_KEY from project .env (if present) — note: it's actually Gemini key
 // Usage: require_once __DIR__ . '/openai.php';
 //        $answer = generate_ai_answer($prompt);
 
@@ -31,35 +31,37 @@ function load_env_value($key)
 
 function generate_ai_answer($prompt)
 {
-    $apiKey = load_env_value('OPENAI_API_KEY');
+    $apiKey = load_env_value('OPENAI_API_KEY'); // Note: using OPENAI_API_KEY but it's actually Gemini key
     if (!$apiKey) {
-        error_log('OpenAI API key missing. Set OPENAI_API_KEY in environment or .env');
+        error_log('Gemini API key missing. Set OPENAI_API_KEY in environment or .env');
         return false;
     }
 
-    $url = 'https://api.openai.com/v1/chat/completions';
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $apiKey;
+
+    // Prepend system message to prompt
+    $fullPrompt = 'You are a helpful, conservative medical assistant. Provide clear, evidence-based information, include a short safety disclaimer, and avoid giving definitive diagnoses. Keep the tone professional.' . "\n\n" . $prompt;
 
     $payload = [
-        'model' => 'gpt-3.5-turbo',
-        'messages' => [
-            ['role' => 'system', 'content' => 'You are a helpful, conservative medical assistant. Provide clear, evidence-based information, include a short safety disclaimer, and avoid giving definitive diagnoses. Keep the tone professional.'],
-            ['role' => 'user', 'content' => $prompt]
-        ],
-        'temperature' => 0.2,
-        'max_tokens' => 800,
+        'contents' => [
+            [
+                'parts' => [
+                    ['text' => $fullPrompt]
+                ]
+            ]
+        ]
     ];
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey,
     ]);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
     $result = curl_exec($ch);
     if ($result === false) {
-        error_log('OpenAI request failed: ' . curl_error($ch));
+        error_log('Gemini request failed: ' . curl_error($ch));
         curl_close($ch);
         return false;
     }
@@ -68,18 +70,18 @@ function generate_ai_answer($prompt)
     curl_close($ch);
 
     if ($httpCode < 200 || $httpCode >= 300) {
-        error_log('OpenAI returned HTTP ' . $httpCode . ': ' . $result);
+        error_log('Gemini returned HTTP ' . $httpCode . ': ' . $result);
         return false;
     }
 
     $data = json_decode($result, true);
-    if (!isset($data['choices'][0]['message']['content'])) {
-        error_log('OpenAI response missing expected fields: ' . $result);
+    if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+        error_log('Gemini response missing expected fields: ' . $result);
         return false;
     }
 
     // Trim and return the content
-    $content = trim($data['choices'][0]['message']['content']);
+    $content = trim($data['candidates'][0]['content']['parts'][0]['text']);
     return $content;
 }
 
