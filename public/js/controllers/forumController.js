@@ -57,90 +57,55 @@ class ForumController {
  */
 class ForumModel {
   constructor() {
-    this.discussions = this.generateDummyDiscussions();
-  }
-
-  generateDummyDiscussions() {
-    return [
-      {
-        id: "disc-001",
-        title: "Managing chronic pain - what works for you?",
-        category: "support",
-        preview:
-          "I've been dealing with chronic back pain for over a year now. I've tried various treatments but nothing seems to provide long-term relief. What strategies have worked for others in similar situations?",
-        author: "John Smith",
-        authorAvatar: "https://via.placeholder.com/50/2563eb/ffffff?text=JS",
-        replies: 12,
-        views: 45,
-        lastActivity: "2 hours ago",
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-002",
-        title: "New medication side effects - when to worry?",
-        category: "treatments",
-        preview:
-          "Started a new prescription last week and I'm experiencing some side effects. How do you know when side effects are normal vs. when you should contact your doctor?",
-        author: "Maria Chen",
-        authorAvatar: "https://via.placeholder.com/50/059669/ffffff?text=MC",
-        replies: 8,
-        views: 32,
-        lastActivity: "4 hours ago",
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-003",
-        title: "Tips for maintaining a healthy lifestyle with diabetes",
-        category: "lifestyle",
-        preview:
-          "Recently diagnosed with Type 2 diabetes and looking for practical tips on managing diet, exercise, and lifestyle changes. What has helped you the most?",
-        author: "Emily Rodriguez",
-        authorAvatar: "https://via.placeholder.com/50/06b6d4/ffffff?text=ER",
-        replies: 15,
-        views: 67,
-        lastActivity: "6 hours ago",
-        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-004",
-        title: "Understanding anxiety symptoms - seeking support",
-        category: "symptoms",
-        preview:
-          "I've been experiencing anxiety symptoms for the past few months. Feeling overwhelmed and not sure if what I'm experiencing is normal anxiety or something more serious.",
-        author: "Alex Lee",
-        authorAvatar: "https://via.placeholder.com/50/dc2626/ffffff?text=AL",
-        replies: 23,
-        views: 89,
-        lastActivity: "1 day ago",
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-005",
-        title: "Sleep hygiene tips for better rest",
-        category: "lifestyle",
-        preview:
-          "Struggling with insomnia lately and looking for evidence-based tips to improve sleep quality. What routines or changes have made the biggest difference for you?",
-        author: "Sarah Wilson",
-        authorAvatar: "https://via.placeholder.com/50/7c3aed/ffffff?text=SW",
-        replies: 18,
-        views: 124,
-        lastActivity: "2 days ago",
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
   }
 
   async getDiscussions(category = null, sortBy = "recent") {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Fetch real questions (with AI answers) from backend API
+    const params = new URLSearchParams();
+    if (category) params.append("category", category);
+    if (sortBy) params.append("sort", sortBy);
 
-    let discussions = [...this.discussions];
+    const response = await fetch(
+      `api/getQuestions.php${params.toString() ? `?${params.toString()}` : ""}`
+    );
 
-    // Filter by category
-    if (category) {
-      discussions = discussions.filter((d) => d.category === category);
+    if (!response.ok) {
+      throw new Error("Failed to fetch questions");
     }
 
-    // Sort discussions
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || "Unknown error while loading questions");
+    }
+
+    // Map API questions into discussion structure used by the view
+    const discussions = data.questions.map((q) => {
+      const authorName = q.user_name || "Anonymous";
+      const initials = authorName
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
+
+      return {
+        id: q.id,
+        title: q.title,
+        category: q.category || "general",
+        preview: q.preview || q.body,
+        author: authorName,
+        authorAvatar: `https://via.placeholder.com/50/2563eb/ffffff?text=${encodeURIComponent(
+          initials || "U"
+        )}`,
+        replies: q.replies || 0,
+        views: q.views || 0,
+        lastActivity: q.time_ago || "",
+        createdAt: q.created_at,
+        aiAnswer: q.ai_answer || "",
+      };
+    });
+
+    // Client-side sorting fallback if backend doesn't handle it
     switch (sortBy) {
       case "popular":
         discussions.sort((a, b) => b.views - a.views);
@@ -160,8 +125,9 @@ class ForumModel {
   }
 
   async getDiscussionById(id) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return this.discussions.find((d) => d.id === id);
+    // For now, re-use getDiscussions and find by id.
+    const discussions = await this.getDiscussions();
+    return discussions.find((d) => d.id === id);
   }
 }
 
@@ -214,11 +180,9 @@ class ForumView {
                     </div>
                     <p class="discussion-preview">${discussion.preview}</p>
                     <div class="discussion-meta">
-                        <span class="discussion-author">by ${
-                          discussion.author
-                        }</span>
+                        <span class="discussion-author">by ${discussion.author}</span>
                         <span class="discussion-time">${
-                          discussion.lastActivity
+                          discussion.lastActivity || ""
                         }</span>
                         <span class="discussion-replies">
                             <i class="fas fa-comments"></i>
@@ -229,6 +193,14 @@ class ForumView {
                             ${discussion.views} views
                         </span>
                     </div>
+                    ${
+                      discussion.aiAnswer
+                        ? `<div class="discussion-ai-answer">
+                              <h4 class="ai-answer-title">AI Answer</h4>
+                              <p class="ai-answer-body">${discussion.aiAnswer}</p>
+                           </div>`
+                        : ""
+                    }
                 </div>
             </div>
         `;
@@ -268,7 +240,8 @@ class ForumView {
 
 // Initialize forum controller when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
-  if (window.location.pathname.includes("forum.html")) {
+  // Initialize on the forum page (PHP route)
+  if (document.querySelector(".discussions-list")) {
     new ForumController();
   }
 });

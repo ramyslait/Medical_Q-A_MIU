@@ -36,10 +36,17 @@ try {
             category VARCHAR(100) DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             status ENUM('pending', 'answered', 'closed') DEFAULT 'pending',
+            ai_answer MEDIUMTEXT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
     ";
     $conn->exec($sql);
+
+    // Add ai_answer column if the table already exists but column is missing
+    $conn->exec("
+        ALTER TABLE questions
+        ADD COLUMN IF NOT EXISTS ai_answer MEDIUMTEXT NULL;
+    ");
 
     echo "✅ Tables 'users' and 'questions' created or verified successfully.";
 } catch (PDOException $e) {

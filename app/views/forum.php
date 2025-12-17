@@ -275,7 +275,7 @@
 
   <!-- Scripts -->
   <script src="js/main.js"></script>
-  <script src="<script src=" js/main.js"></script>/js/controllers/forumController.js"></script>
+  <script src="js/controllers/forumController.js"></script>
   <script>
     function startNewDiscussion() {
       if (!MediQA.isLoggedIn) {

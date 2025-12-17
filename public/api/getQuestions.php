@@ -15,6 +15,7 @@ try {
             q.category,
             q.status,
             q.created_at,
+            q.ai_answer,
             u.name as user_name,
             u.email as user_email
         FROM questions q
@@ -31,6 +32,7 @@ try {
             'category' => $q['category'],
             'status' => $q['status'],
             'created_at' => $q['created_at'],
+            'ai_answer' => $q['ai_answer'],
             'user_name' => $q['user_name'],
             'user_email' => $q['user_email'],
             'preview' => substr($q['body'], 0, 100) . (strlen($q['body']) > 100 ? '...' : ''),
