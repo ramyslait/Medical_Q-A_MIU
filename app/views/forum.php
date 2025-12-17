@@ -17,6 +17,19 @@
   <!-- Navigation Header -->
   <?php include '../app/partials/navbar.php'; ?>
 
+  <?php
+    // Load recent questions and AI answers
+    require_once __DIR__ . '/../../config/db.php';
+    $pdo = Database::getConnection();
+    try {
+        $qstmt = $pdo->prepare("SELECT q.id, q.title, q.body, q.ai_answer, q.ai_approved, q.ai_generated, q.created_at, u.username FROM questions q LEFT JOIN users u ON q.user_id = u.id ORDER BY q.created_at DESC LIMIT 20");
+        $qstmt->execute();
+        $questions = $qstmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $questions = [];
+    }
+  ?>
+
   <!-- Main Content -->
   <main class="main-content">
     <div class="container">
@@ -80,172 +93,48 @@
 
         <div class="forum-main">
           <div class="discussions-list">
-            <div class="discussion-item">
-              <div class="discussion-avatar">
-                <img
-                  src="https://via.placeholder.com/50/2563eb/ffffff?text=JS"
-                  alt="User Avatar" />
-              </div>
-              <div class="discussion-content">
-                <div class="discussion-header">
-                  <h3 class="discussion-title">
-                    <a href="discussion-detail.html">Managing chronic pain - what works for you?</a>
-                  </h3>
-                  <span class="discussion-category badge badge-info">Support</span>
-                </div>
-                <p class="discussion-preview">
-                  I've been dealing with chronic back pain for over a year
-                  now. I've tried various treatments but nothing seems to
-                  provide long-term relief. What strategies have worked for
-                  others in similar situations?
-                </p>
-                <div class="discussion-meta">
-                  <span class="discussion-author">by John Smith</span>
-                  <span class="discussion-time">2 hours ago</span>
-                  <span class="discussion-replies">
-                    <i class="fas fa-comments"></i>
-                    12 replies
-                  </span>
-                  <span class="discussion-views">
-                    <i class="fas fa-eye"></i>
-                    45 views
-                  </span>
-                </div>
-              </div>
-            </div>
+            <?php if (empty($questions)): ?>
+              <div class="loading-placeholder"><p>No discussions yet.</p></div>
+            <?php else: ?>
+              <?php foreach ($questions as $q): ?>
+                <div class="discussion-item">
+                  <div class="discussion-avatar">
+                    <img src="https://via.placeholder.com/50/2563eb/ffffff?text=U" alt="User Avatar" />
+                  </div>
+                  <div class="discussion-content">
+                    <div class="discussion-header">
+                      <h3 class="discussion-title">
+                        <a href="/Medical_Q-A_MIU/public/forum?question_id=<?= intval($q['id']) ?>"><?= htmlspecialchars($q['title']) ?></a>
+                      </h3>
+                    </div>
+                    <p class="discussion-preview">
+                      <?= nl2br(htmlspecialchars(substr($q['body'], 0, 300))) ?>
+                    </p>
 
-            <div class="discussion-item">
-              <div class="discussion-avatar">
-                <img
-                  src="https://via.placeholder.com/50/059669/ffffff?text=MC"
-                  alt="User Avatar" />
-              </div>
-              <div class="discussion-content">
-                <div class="discussion-header">
-                  <h3 class="discussion-title">
-                    <a href="discussion-detail.html">New medication side effects - when to worry?</a>
-                  </h3>
-                  <span class="discussion-category badge badge-warning">Treatments</span>
-                </div>
-                <p class="discussion-preview">
-                  Started a new prescription last week and I'm experiencing
-                  some side effects. How do you know when side effects are
-                  normal vs. when you should contact your doctor?
-                </p>
-                <div class="discussion-meta">
-                  <span class="discussion-author">by Maria Chen</span>
-                  <span class="discussion-time">4 hours ago</span>
-                  <span class="discussion-replies">
-                    <i class="fas fa-comments"></i>
-                    8 replies
-                  </span>
-                  <span class="discussion-views">
-                    <i class="fas fa-eye"></i>
-                    32 views
-                  </span>
-                </div>
-              </div>
-            </div>
+                    <?php if (!empty($q['ai_answer'])): ?>
+                      <div class="ai-answer-box">
+                        <div class="ai-badge">
+                          <span class="badge badge-info">Generated by AI</span>
+                          <?php if (intval($q['ai_approved']) === 1): ?>
+                            <span class="badge badge-success">Approved by Dr</span>
+                          <?php else: ?>
+                            <span class="badge badge-warning">Pending doctor approval</span>
+                          <?php endif; ?>
+                        </div>
+                        <div class="ai-answer-preview">
+                          <?= nl2br(htmlspecialchars(substr($q['ai_answer'], 0, 400))) ?>
+                        </div>
+                      </div>
+                    <?php endif; ?>
 
-            <div class="discussion-item">
-              <div class="discussion-avatar">
-                <img
-                  src="https://via.placeholder.com/50/06b6d4/ffffff?text=ER"
-                  alt="User Avatar" />
-              </div>
-              <div class="discussion-content">
-                <div class="discussion-header">
-                  <h3 class="discussion-title">
-                    <a href="discussion-detail.html">Tips for maintaining a healthy lifestyle with
-                      diabetes</a>
-                  </h3>
-                  <span class="discussion-category badge badge-success">Lifestyle</span>
+                    <div class="discussion-meta">
+                      <span class="discussion-author">by <?= htmlspecialchars($q['username'] ?? $q['username'] ?? 'Anonymous') ?></span>
+                      <span class="discussion-time"><?= htmlspecialchars($q['created_at']) ?></span>
+                    </div>
+                  </div>
                 </div>
-                <p class="discussion-preview">
-                  Recently diagnosed with Type 2 diabetes and looking for
-                  practical tips on managing diet, exercise, and lifestyle
-                  changes. What has helped you the most?
-                </p>
-                <div class="discussion-meta">
-                  <span class="discussion-author">by Emily Rodriguez</span>
-                  <span class="discussion-time">6 hours ago</span>
-                  <span class="discussion-replies">
-                    <i class="fas fa-comments"></i>
-                    15 replies
-                  </span>
-                  <span class="discussion-views">
-                    <i class="fas fa-eye"></i>
-                    67 views
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="discussion-item">
-              <div class="discussion-avatar">
-                <img
-                  src="https://via.placeholder.com/50/dc2626/ffffff?text=AL"
-                  alt="User Avatar" />
-              </div>
-              <div class="discussion-content">
-                <div class="discussion-header">
-                  <h3 class="discussion-title">
-                    <a href="discussion-detail.html">Understanding anxiety symptoms - seeking support</a>
-                  </h3>
-                  <span class="discussion-category badge badge-danger">Symptoms</span>
-                </div>
-                <p class="discussion-preview">
-                  I've been experiencing anxiety symptoms for the past few
-                  months. Feeling overwhelmed and not sure if what I'm
-                  experiencing is normal anxiety or something more serious.
-                </p>
-                <div class="discussion-meta">
-                  <span class="discussion-author">by Alex Lee</span>
-                  <span class="discussion-time">1 day ago</span>
-                  <span class="discussion-replies">
-                    <i class="fas fa-comments"></i>
-                    23 replies
-                  </span>
-                  <span class="discussion-views">
-                    <i class="fas fa-eye"></i>
-                    89 views
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="discussion-item">
-              <div class="discussion-avatar">
-                <img
-                  src="https://via.placeholder.com/50/7c3aed/ffffff?text=SW"
-                  alt="User Avatar" />
-              </div>
-              <div class="discussion-content">
-                <div class="discussion-header">
-                  <h3 class="discussion-title">
-                    <a href="discussion-detail.html">Sleep hygiene tips for better rest</a>
-                  </h3>
-                  <span class="discussion-category badge badge-info">Lifestyle</span>
-                </div>
-                <p class="discussion-preview">
-                  Struggling with insomnia lately and looking for
-                  evidence-based tips to improve sleep quality. What routines
-                  or changes have made the biggest difference for you?
-                </p>
-                <div class="discussion-meta">
-                  <span class="discussion-author">by Sarah Wilson</span>
-                  <span class="discussion-time">2 days ago</span>
-                  <span class="discussion-replies">
-                    <i class="fas fa-comments"></i>
-                    18 replies
-                  </span>
-                  <span class="discussion-views">
-                    <i class="fas fa-eye"></i>
-                    124 views
-                  </span>
-                </div>
-              </div>
-            </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
 
           <div class="pagination">

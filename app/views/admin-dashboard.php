@@ -12,6 +12,11 @@
   <script src="js/controllers/adminController.js"></script>
 
   <?php if (session_status() === PHP_SESSION_NONE) { session_start(); } $user = $_SESSION['user'] ?? null; ?>
+  <?php
+    // DB connection for admin widgets
+    require_once __DIR__ . '/../../config/db.php';
+    $pdo = Database::getConnection();
+  ?>
   <script>
     // Bridge server session -> client state so client-side auth doesn't misfire
     window.MediQA = window.MediQA || {};
@@ -317,11 +322,46 @@
         </div>
 
         <div class="questions-grid">
-          <!-- Questions will be loaded dynamically here -->
-          <div class="loading-placeholder">
-            <div class="spinner"></div>
-            <p>Loading questions...</p>
-          </div>
+          <?php
+            // Fetch pending AI-generated answers awaiting approval
+            try {
+                $stmt = $pdo->prepare("SELECT q.id, q.title, q.body, q.ai_answer, q.created_at, u.username AS author FROM questions q LEFT JOIN users u ON q.user_id = u.id WHERE q.ai_generated = 1 AND q.ai_approved = 0 ORDER BY q.created_at DESC LIMIT 20");
+                $stmt->execute();
+                $pending = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                $pending = [];
+            }
+
+            if (empty($pending)) {
+                echo '<div class="loading-placeholder"><p>No pending AI answers at the moment.</p></div>';
+            } else {
+                foreach ($pending as $p) {
+                    ?>
+                    <div class="question-card">
+                      <div class="question-meta">
+                        <div class="q-title"><?= htmlspecialchars($p['title']) ?></div>
+                        <div class="q-author">by <?= htmlspecialchars($p['author'] ?? 'Anonymous') ?> • <?= htmlspecialchars($p['created_at']) ?></div>
+                      </div>
+                      <div class="q-body"><?= nl2br(htmlspecialchars($p['body'])) ?></div>
+                      <div class="q-ai-answer">
+                        <h4>AI Draft Answer</h4>
+                        <div class="ai-answer-content"><?= nl2br(htmlspecialchars($p['ai_answer'])) ?></div>
+                      </div>
+                      <div class="q-actions">
+                        <form method="POST" action="/Medical_Q-A_MIU/public/approve-ai-answer" style="display:inline-block; margin-right:8px;">
+                          <input type="hidden" name="question_id" value="<?= intval($p['id']) ?>">
+                          <button name="action" value="approve" class="btn btn-small btn-primary">Approve</button>
+                        </form>
+                        <form method="POST" action="/Medical_Q-A_MIU/public/approve-ai-answer" style="display:inline-block;">
+                          <input type="hidden" name="question_id" value="<?= intval($p['id']) ?>">
+                          <button name="action" value="reject" class="btn btn-small btn-outline">Reject</button>
+                        </form>
+                      </div>
+                    </div>
+                    <?php
+                }
+            }
+          ?>
         </div>
       </section>
 
