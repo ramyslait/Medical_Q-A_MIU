@@ -105,12 +105,12 @@
     <div class="sidebar-footer">
       <div class="user-info">
         <img
-          src="https://via.placeholder.com/40/2563eb/ffffff?text=SA"
+          src="https://via.placeholder.com/40/2563eb/ffffff?text=<?php echo strtoupper(substr($user['name'] ?? 'A', 0, 2)); ?>"
           alt="User Avatar"
           class="user-avatar" />
         <div class="user-details">
-          <div class="user-name">Dr. Sarah Johnson</div>
-          <div class="user-role">Administrator</div>
+          <div class="user-name"><?php echo htmlspecialchars($user['name'] ?? 'Administrator'); ?></div>
+          <div class="user-role"><?php echo ucfirst($user['role'] ?? 'Administrator'); ?></div>
         </div>
       </div>
       <button class="logout-btn" onclick="MediQA.logout()">
@@ -191,11 +191,11 @@
               <i class="fas fa-comments"></i>
             </div>
             <div class="stat-content">
-              <div class="stat-number">2,156</div>
+              <div id="answersProvidedCount" class="stat-number">0</div>
               <div class="stat-label">Answers Provided</div>
               <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
-                +8% this week
+                <span id="answersChange">Loading...</span>
               </div>
             </div>
           </div>
@@ -205,11 +205,11 @@
               <i class="fas fa-chart-line"></i>
             </div>
             <div class="stat-content">
-              <div class="stat-number">95.2%</div>
+              <div id="accuracyRate" class="stat-number">0%</div>
               <div class="stat-label">Accuracy Rate</div>
               <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
-                +2.1% improvement
+                <span id="accuracyChange">Loading...</span>
               </div>
             </div>
           </div>
@@ -365,9 +365,380 @@
         </div>
       </section>
 
-      <!-- Other sections would be similar... -->
+      <!-- Answers Management Section -->
+      <section class="dashboard-section" id="answers-section">
+        <div class="section-header">
+          <h2>Answer Management</h2>
+          <p>Review and manage AI-generated answers</p>
+        </div>
+
+        <div class="filter-bar" style="margin-bottom: 1.5rem;">
+          <select id="answerStatusFilter" class="filter-select" style="max-width: 200px;">
+            <option value="">All Answers</option>
+            <option value="answered">Answered</option>
+            <option value="pending">Pending</option>
+            <option value="closed">Closed</option>
+          </select>
+          <select id="answerCategoryFilter" class="filter-select" style="max-width: 200px;">
+            <option value="">All Categories</option>
+            <option value="general">General</option>
+            <option value="symptoms">Symptoms</option>
+            <option value="treatments">Treatments</option>
+            <option value="lifestyle">Lifestyle</option>
+            <option value="support">Support</option>
+          </select>
+        </div>
+
+        <div class="answers-grid">
+          <!-- Answers will be loaded dynamically here -->
+          <div class="loading-placeholder">
+            <div class="spinner"></div>
+            <p>Loading answers...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Forum Management Section -->
+      <section class="dashboard-section" id="forum-section">
+        <div class="section-header">
+          <h2>Forum Management</h2>
+          <p>Manage forum discussions and community content</p>
+        </div>
+
+        <div class="forum-stats-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="stat-card-small">
+            <div class="stat-number-small" id="forumTotalQuestions">0</div>
+            <div class="stat-label-small">Total Questions</div>
+          </div>
+          <div class="stat-card-small">
+            <div class="stat-number-small" id="forumAnsweredQuestions">0</div>
+            <div class="stat-label-small">Answered</div>
+          </div>
+          <div class="stat-card-small">
+            <div class="stat-number-small" id="forumPendingQuestions">0</div>
+            <div class="stat-label-small">Pending</div>
+          </div>
+          <div class="stat-card-small">
+            <div class="stat-number-small" id="forumCategories">0</div>
+            <div class="stat-label-small">Categories</div>
+          </div>
+        </div>
+
+        <div class="filter-bar" style="margin-bottom: 1.5rem;">
+          <select id="forumStatusFilter" class="filter-select" style="max-width: 200px;">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="answered">Answered</option>
+            <option value="closed">Closed</option>
+          </select>
+          <select id="forumCategoryFilter" class="filter-select" style="max-width: 200px;">
+            <option value="">All Categories</option>
+            <option value="general">General</option>
+            <option value="symptoms">Symptoms</option>
+            <option value="treatments">Treatments</option>
+            <option value="lifestyle">Lifestyle</option>
+            <option value="support">Support</option>
+          </select>
+          <select id="forumSortFilter" class="filter-select" style="max-width: 200px;">
+            <option value="recent">Most Recent</option>
+            <option value="oldest">Oldest First</option>
+            <option value="category">By Category</option>
+          </select>
+        </div>
+
+        <div class="forum-management-grid">
+          <!-- Forum discussions will be loaded dynamically here -->
+          <div class="loading-placeholder">
+            <div class="spinner"></div>
+            <p>Loading forum discussions...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics Section -->
+      <section class="dashboard-section" id="analytics-section">
+        <div class="section-header">
+          <h2>Analytics</h2>
+          <p>View detailed analytics and insights</p>
+        </div>
+
+        <div class="analytics-grid">
+          <!-- User Growth Chart -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>User Growth (Last 7 Days)</h3>
+            </div>
+            <div class="analytics-card-body">
+              <canvas id="userGrowthChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Question Volume Chart -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>Question Volume (Last 7 Days)</h3>
+            </div>
+            <div class="analytics-card-body">
+              <canvas id="questionVolumeChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Category Distribution -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>Category Distribution</h3>
+            </div>
+            <div class="analytics-card-body">
+              <div id="categoryDistributionChart" class="chart-container"></div>
+            </div>
+          </div>
+
+          <!-- Status Distribution -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>Status Distribution</h3>
+            </div>
+            <div class="analytics-card-body">
+              <div id="statusDistributionChart" class="chart-container"></div>
+            </div>
+          </div>
+
+          <!-- Monthly Statistics -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>Monthly Users</h3>
+            </div>
+            <div class="analytics-card-body">
+              <canvas id="monthlyUsersChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Monthly Questions -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>Monthly Questions</h3>
+            </div>
+            <div class="analytics-card-body">
+              <canvas id="monthlyQuestionsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Key Metrics -->
+          <div class="analytics-card full-width">
+            <div class="analytics-card-header">
+              <h3>Key Metrics</h3>
+            </div>
+            <div class="analytics-card-body">
+              <div class="metrics-grid">
+                <div class="metric-item">
+                  <div class="metric-label">Average Response Time</div>
+                  <div class="metric-value" id="avgResponseTime">-</div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Top Category</div>
+                  <div class="metric-value" id="topCategory">-</div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Total Categories</div>
+                  <div class="metric-value" id="totalCategories">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section class="dashboard-section" id="settings-section">
+        <div class="section-header">
+          <h2>Settings</h2>
+          <p>Manage system settings and configurations</p>
+        </div>
+
+        <div class="settings-container">
+          <div class="settings-tabs">
+            <button class="settings-tab active" data-tab="general">General</button>
+            <button class="settings-tab" data-tab="notifications">Notifications</button>
+            <button class="settings-tab" data-tab="security">Security</button>
+            <button class="settings-tab" data-tab="ai">AI Settings</button>
+          </div>
+
+          <!-- General Settings -->
+          <div class="settings-content active" id="general-settings">
+            <div class="settings-group">
+              <h3>Site Information</h3>
+              <div class="form-group">
+                <label class="form-label">Site Name</label>
+                <input type="text" class="form-input" id="siteName" value="Medical Q&A" placeholder="Site Name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Site Description</label>
+                <textarea class="form-textarea" id="siteDescription" rows="3" placeholder="Site Description">Medical Q&A Platform for Community Health Support</textarea>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <h3>Display Settings</h3>
+              <div class="form-group">
+                <label class="form-label">Questions Per Page</label>
+                <select class="form-select" id="questionsPerPage">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Default Sort Order</label>
+                <select class="form-select" id="defaultSortOrder">
+                  <option value="recent" selected>Most Recent</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="category">By Category</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary" onclick="saveSettings('general')">Save Changes</button>
+              <button class="btn btn-outline" onclick="resetSettings('general')">Reset</button>
+            </div>
+          </div>
+
+          <!-- Notifications Settings -->
+          <div class="settings-content" id="notifications-settings">
+            <div class="settings-group">
+              <h3>Email Notifications</h3>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="emailNewQuestion" checked>
+                  <span>Notify on new questions</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="emailNewUser" checked>
+                  <span>Notify on new user registrations</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="emailDailyReport">
+                  <span>Send daily summary report</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <h3>Notification Frequency</h3>
+              <div class="form-group">
+                <label class="form-label">Report Frequency</label>
+                <select class="form-select" id="reportFrequency">
+                  <option value="daily">Daily</option>
+                  <option value="weekly" selected>Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary" onclick="saveSettings('notifications')">Save Changes</button>
+              <button class="btn btn-outline" onclick="resetSettings('notifications')">Reset</button>
+            </div>
+          </div>
+
+          <!-- Security Settings -->
+          <div class="settings-content" id="security-settings">
+            <div class="settings-group">
+              <h3>Password Policy</h3>
+              <div class="form-group">
+                <label class="form-label">Minimum Password Length</label>
+                <input type="number" class="form-input" id="minPasswordLength" value="8" min="6" max="20">
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="requireUppercase">
+                  <span>Require uppercase letters</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="requireNumbers">
+                  <span>Require numbers</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="requireSpecialChars">
+                  <span>Require special characters</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <h3>Session Management</h3>
+              <div class="form-group">
+                <label class="form-label">Session Timeout (minutes)</label>
+                <input type="number" class="form-input" id="sessionTimeout" value="30" min="5" max="1440">
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary" onclick="saveSettings('security')">Save Changes</button>
+              <button class="btn btn-outline" onclick="resetSettings('security')">Reset</button>
+            </div>
+          </div>
+
+          <!-- AI Settings -->
+          <div class="settings-content" id="ai-settings">
+            <div class="settings-group">
+              <h3>AI Configuration</h3>
+              <div class="form-group">
+                <label class="form-label">AI Provider</label>
+                <select class="form-select" id="aiProvider">
+                  <option value="deepseek" selected>DeepSeek</option>
+                  <option value="groq">Groq</option>
+                  <option value="openai">OpenAI</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Tokens</label>
+                <input type="number" class="form-input" id="maxTokens" value="1000" min="100" max="4000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Temperature</label>
+                <input type="number" class="form-input" id="temperature" value="0.7" min="0" max="2" step="0.1">
+                <small class="form-help">Lower values make responses more focused, higher values more creative</small>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <h3>AI Response Settings</h3>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="autoGenerateAnswers" checked>
+                  <span>Automatically generate answers for new questions</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="requireReview">
+                  <span>Require admin review before publishing answers</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary" onclick="saveSettings('ai')">Save Changes</button>
+              <button class="btn btn-outline" onclick="resetSettings('ai')">Reset</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
+
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
  
 </body>

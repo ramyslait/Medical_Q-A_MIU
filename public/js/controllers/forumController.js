@@ -49,6 +49,20 @@ class ForumController {
     const discussions = await this.forumModel.getDiscussions(null, sortBy);
     this.forumView.renderDiscussions(discussions);
   }
+
+  showApproveModal(questionId) {
+    this.forumView.showApproveModal(questionId);
+  }
+
+  showDisapproveModal(questionId) {
+    this.forumView.showDisapproveModal(questionId);
+  }
+
+  async submitReview(formData) {
+    await this.forumView.submitReview(formData);
+    // Reload discussions after review
+    await this.loadDiscussions();
+  }
 }
 
 /**
@@ -57,90 +71,60 @@ class ForumController {
  */
 class ForumModel {
   constructor() {
-    this.discussions = this.generateDummyDiscussions();
-  }
-
-  generateDummyDiscussions() {
-    return [
-      {
-        id: "disc-001",
-        title: "Managing chronic pain - what works for you?",
-        category: "support",
-        preview:
-          "I've been dealing with chronic back pain for over a year now. I've tried various treatments but nothing seems to provide long-term relief. What strategies have worked for others in similar situations?",
-        author: "John Smith",
-        authorAvatar: "https://via.placeholder.com/50/2563eb/ffffff?text=JS",
-        replies: 12,
-        views: 45,
-        lastActivity: "2 hours ago",
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-002",
-        title: "New medication side effects - when to worry?",
-        category: "treatments",
-        preview:
-          "Started a new prescription last week and I'm experiencing some side effects. How do you know when side effects are normal vs. when you should contact your doctor?",
-        author: "Maria Chen",
-        authorAvatar: "https://via.placeholder.com/50/059669/ffffff?text=MC",
-        replies: 8,
-        views: 32,
-        lastActivity: "4 hours ago",
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-003",
-        title: "Tips for maintaining a healthy lifestyle with diabetes",
-        category: "lifestyle",
-        preview:
-          "Recently diagnosed with Type 2 diabetes and looking for practical tips on managing diet, exercise, and lifestyle changes. What has helped you the most?",
-        author: "Emily Rodriguez",
-        authorAvatar: "https://via.placeholder.com/50/06b6d4/ffffff?text=ER",
-        replies: 15,
-        views: 67,
-        lastActivity: "6 hours ago",
-        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-004",
-        title: "Understanding anxiety symptoms - seeking support",
-        category: "symptoms",
-        preview:
-          "I've been experiencing anxiety symptoms for the past few months. Feeling overwhelmed and not sure if what I'm experiencing is normal anxiety or something more serious.",
-        author: "Alex Lee",
-        authorAvatar: "https://via.placeholder.com/50/dc2626/ffffff?text=AL",
-        replies: 23,
-        views: 89,
-        lastActivity: "1 day ago",
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "disc-005",
-        title: "Sleep hygiene tips for better rest",
-        category: "lifestyle",
-        preview:
-          "Struggling with insomnia lately and looking for evidence-based tips to improve sleep quality. What routines or changes have made the biggest difference for you?",
-        author: "Sarah Wilson",
-        authorAvatar: "https://via.placeholder.com/50/7c3aed/ffffff?text=SW",
-        replies: 18,
-        views: 124,
-        lastActivity: "2 days ago",
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
   }
 
   async getDiscussions(category = null, sortBy = "recent") {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Fetch real questions (with AI answers) from backend API
+    const params = new URLSearchParams();
+    if (category) params.append("category", category);
+    if (sortBy) params.append("sort", sortBy);
 
-    let discussions = [...this.discussions];
+    const response = await fetch(
+      `api/getQuestions.php${params.toString() ? `?${params.toString()}` : ""}`
+    );
 
-    // Filter by category
-    if (category) {
-      discussions = discussions.filter((d) => d.category === category);
+    if (!response.ok) {
+      throw new Error("Failed to fetch questions");
     }
 
-    // Sort discussions
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || "Unknown error while loading questions");
+    }
+
+    // Map API questions into discussion structure used by the view
+    const discussions = data.questions.map((q) => {
+      const authorName = q.user_name || "Anonymous";
+      const initials = authorName
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
+
+      return {
+        id: q.id,
+        title: q.title,
+        category: q.category || "general",
+        preview: q.preview || q.body,
+        author: authorName,
+        authorAvatar: `https://via.placeholder.com/50/2563eb/ffffff?text=${encodeURIComponent(
+          initials || "U"
+        )}`,
+        replies: q.replies || 0,
+        views: q.views || 0,
+        lastActivity: q.time_ago || "",
+        createdAt: q.created_at,
+        aiAnswer: q.ai_answer || "",
+        doctorApprovalStatus: q.doctor_approval_status || "pending",
+        doctorAnswer: q.doctor_answer || null,
+        doctorComment: q.doctor_comment || null,
+        doctorName: q.doctor_name || null,
+        doctorReviewedAt: q.doctor_reviewed_at || null,
+      };
+    });
+
+    // Client-side sorting fallback if backend doesn't handle it
     switch (sortBy) {
       case "popular":
         discussions.sort((a, b) => b.views - a.views);
@@ -160,8 +144,9 @@ class ForumModel {
   }
 
   async getDiscussionById(id) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return this.discussions.find((d) => d.id === id);
+    // For now, re-use getDiscussions and find by id.
+    const discussions = await this.getDiscussions();
+    return discussions.find((d) => d.id === id);
   }
 }
 
@@ -196,6 +181,21 @@ class ForumView {
       general: "badge-info",
     };
 
+    const approvalStatusClasses = {
+      approved: "badge-success",
+      pending: "badge-warning",
+      not_approved: "badge-danger",
+    };
+
+    const approvalStatusLabels = {
+      approved: "Approved",
+      pending: "Pending Review",
+      not_approved: "Not Approved",
+    };
+
+    const isDoctor = window.currentUserRole === "doctor";
+    const canReview = isDoctor && discussion.doctorApprovalStatus === "pending";
+
     return `
             <div class="discussion-item">
                 <div class="discussion-avatar">
@@ -204,21 +204,29 @@ class ForumView {
                 <div class="discussion-content">
                     <div class="discussion-header">
                         <h3 class="discussion-title">
-                            <a href="discussion-detail.html?id=${
-                              discussion.id
-                            }">${discussion.title}</a>
+                            ${discussion.title}
                         </h3>
-                        <span class="discussion-category badge ${
-                          categoryClasses[discussion.category] || "badge-info"
-                        }">${discussion.category}</span>
+                        <div class="discussion-badges">
+                            <span class="discussion-category badge ${
+                              categoryClasses[discussion.category] || "badge-info"
+                            }">${discussion.category}</span>
+                            <span class="approval-status badge ${
+                              approvalStatusClasses[discussion.doctorApprovalStatus] || "badge-warning"
+                            }">
+                                <i class="fas ${
+                                  discussion.doctorApprovalStatus === "approved" ? "fa-check-circle" :
+                                  discussion.doctorApprovalStatus === "not_approved" ? "fa-times-circle" :
+                                  "fa-clock"
+                                }"></i>
+                                ${approvalStatusLabels[discussion.doctorApprovalStatus] || "Pending Review"}
+                            </span>
+                        </div>
                     </div>
-                    <p class="discussion-preview">${discussion.preview}</p>
+                    <p class="discussion-preview">${this.escapeHtml(discussion.preview)}</p>
                     <div class="discussion-meta">
-                        <span class="discussion-author">by ${
-                          discussion.author
-                        }</span>
+                        <span class="discussion-author">by ${this.escapeHtml(discussion.author)}</span>
                         <span class="discussion-time">${
-                          discussion.lastActivity
+                          discussion.lastActivity || ""
                         }</span>
                         <span class="discussion-replies">
                             <i class="fas fa-comments"></i>
@@ -229,9 +237,175 @@ class ForumView {
                             ${discussion.views} views
                         </span>
                     </div>
+                    
+                    ${discussion.aiAnswer ? `
+                    <div class="discussion-ai-answer">
+                        <div class="ai-answer-header">
+                            <h4 class="ai-answer-title">
+                                <i class="fas fa-robot"></i>
+                                AI Generated Answer
+                            </h4>
+                        </div>
+                        <p class="ai-answer-body">${this.escapeHtml(discussion.aiAnswer)}</p>
+                    </div>
+                    ` : ""}
+                    
+                    ${discussion.doctorApprovalStatus === "approved" && discussion.doctorComment ? `
+                    <div class="discussion-doctor-answer">
+                        <div class="doctor-answer-header">
+                            <h4 class="doctor-answer-title">
+                                <i class="fas fa-user-md"></i>
+                                Doctor's Review
+                                ${discussion.doctorName ? `<span class="doctor-name">by ${this.escapeHtml(discussion.doctorName)}</span>` : ""}
+                            </h4>
+                        </div>
+                        <p class="doctor-comment">${this.escapeHtml(discussion.doctorComment)}</p>
+                    </div>
+                    ` : ""}
+                    
+                    ${discussion.doctorApprovalStatus === "not_approved" && discussion.doctorAnswer ? `
+                    <div class="discussion-doctor-answer">
+                        <div class="doctor-answer-header">
+                            <h4 class="doctor-answer-title">
+                                <i class="fas fa-user-md"></i>
+                                Doctor's Answer
+                                ${discussion.doctorName ? `<span class="doctor-name">by ${this.escapeHtml(discussion.doctorName)}</span>` : ""}
+                            </h4>
+                        </div>
+                        <p class="doctor-answer-body">${this.escapeHtml(discussion.doctorAnswer)}</p>
+                    </div>
+                    ` : ""}
+                    
+                    ${canReview ? `
+                    <div class="doctor-review-panel">
+                        <p class="review-panel-title">Review AI Answer</p>
+                        <div class="review-actions">
+                            <button class="btn btn-small btn-success" onclick="if (window.forumController) window.forumController.showApproveModal(${discussion.id})">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="if (window.forumController) window.forumController.showDisapproveModal(${discussion.id})">
+                                <i class="fas fa-times"></i> Disapprove
+                            </button>
+                        </div>
+                    </div>
+                    ` : ""}
                 </div>
             </div>
         `;
+  }
+
+  escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  showApproveModal(questionId) {
+    const modal = document.createElement("div");
+    modal.className = "review-modal-overlay active";
+    modal.innerHTML = `
+      <div class="review-modal">
+        <div class="review-modal-header">
+          <h3>Approve AI Answer</h3>
+          <button class="review-modal-close" onclick="this.closest('.review-modal-overlay').remove()">&times;</button>
+        </div>
+        <div class="review-modal-body">
+          <form id="approveForm">
+            <input type="hidden" name="question_id" value="${questionId}">
+            <input type="hidden" name="action" value="approve">
+            <div class="form-group">
+              <label class="form-label">Add your comment (optional)</label>
+              <textarea class="form-textarea" name="doctor_comment" rows="4" placeholder="Add any additional notes or clarifications..."></textarea>
+            </div>
+            <div class="review-modal-footer">
+              <button type="button" class="btn btn-outline" onclick="this.closest('.review-modal-overlay').remove()">Cancel</button>
+              <button type="submit" class="btn btn-success">Approve Answer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+      modal.querySelector("#approveForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      if (window.forumController) {
+        await window.forumController.submitReview(formData);
+      }
+      modal.remove();
+    });
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  showDisapproveModal(questionId) {
+    const modal = document.createElement("div");
+    modal.className = "review-modal-overlay active";
+    modal.innerHTML = `
+      <div class="review-modal">
+        <div class="review-modal-header">
+          <h3>Disapprove AI Answer</h3>
+          <button class="review-modal-close" onclick="this.closest('.review-modal-overlay').remove()">&times;</button>
+        </div>
+        <div class="review-modal-body">
+          <form id="disapproveForm">
+            <input type="hidden" name="question_id" value="${questionId}">
+            <input type="hidden" name="action" value="disapprove">
+            <div class="form-group">
+              <label class="form-label">Provide your answer <span style="color: #dc2626;">*</span></label>
+              <textarea class="form-textarea" name="doctor_answer" rows="6" placeholder="Please provide your professional answer to replace the AI answer..." required></textarea>
+            </div>
+            <div class="review-modal-footer">
+              <button type="button" class="btn btn-outline" onclick="this.closest('.review-modal-overlay').remove()">Cancel</button>
+              <button type="submit" class="btn btn-danger">Submit Your Answer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector("#disapproveForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      if (window.forumController) {
+        await window.forumController.submitReview(formData);
+      }
+      modal.remove();
+    });
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  async submitReview(formData) {
+    try {
+      const response = await fetch("api/reviewQuestion.php", {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        MediQA.showNotification("Review submitted successfully", "success");
+      } else {
+        MediQA.showNotification(data.error || "Failed to submit review", "error");
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      MediQA.showNotification("An error occurred while submitting review", "error");
+    }
   }
 
   initializeFAQAccordions() {
@@ -267,8 +441,11 @@ class ForumView {
 }
 
 // Initialize forum controller when DOM is loaded
+let forumController = null;
 document.addEventListener("DOMContentLoaded", function () {
-  if (window.location.pathname.includes("forum.html")) {
-    new ForumController();
+  // Initialize on the forum page (PHP route)
+  if (document.querySelector(".discussions-list")) {
+    forumController = new ForumController();
+    window.forumController = forumController; // Make it globally accessible
   }
 });
