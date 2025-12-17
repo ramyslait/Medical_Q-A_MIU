@@ -49,6 +49,20 @@ class ForumController {
     const discussions = await this.forumModel.getDiscussions(null, sortBy);
     this.forumView.renderDiscussions(discussions);
   }
+
+  showApproveModal(questionId) {
+    this.forumView.showApproveModal(questionId);
+  }
+
+  showDisapproveModal(questionId) {
+    this.forumView.showDisapproveModal(questionId);
+  }
+
+  async submitReview(formData) {
+    await this.forumView.submitReview(formData);
+    // Reload discussions after review
+    await this.loadDiscussions();
+  }
 }
 
 /**
@@ -102,6 +116,11 @@ class ForumModel {
         lastActivity: q.time_ago || "",
         createdAt: q.created_at,
         aiAnswer: q.ai_answer || "",
+        doctorApprovalStatus: q.doctor_approval_status || "pending",
+        doctorAnswer: q.doctor_answer || null,
+        doctorComment: q.doctor_comment || null,
+        doctorName: q.doctor_name || null,
+        doctorReviewedAt: q.doctor_reviewed_at || null,
       };
     });
 
@@ -162,6 +181,21 @@ class ForumView {
       general: "badge-info",
     };
 
+    const approvalStatusClasses = {
+      approved: "badge-success",
+      pending: "badge-warning",
+      not_approved: "badge-danger",
+    };
+
+    const approvalStatusLabels = {
+      approved: "Approved",
+      pending: "Pending Review",
+      not_approved: "Not Approved",
+    };
+
+    const isDoctor = window.currentUserRole === "doctor";
+    const canReview = isDoctor && discussion.doctorApprovalStatus === "pending";
+
     return `
             <div class="discussion-item">
                 <div class="discussion-avatar">
@@ -170,17 +204,27 @@ class ForumView {
                 <div class="discussion-content">
                     <div class="discussion-header">
                         <h3 class="discussion-title">
-                            <a href="discussion-detail.html?id=${
-                              discussion.id
-                            }">${discussion.title}</a>
+                            ${discussion.title}
                         </h3>
-                        <span class="discussion-category badge ${
-                          categoryClasses[discussion.category] || "badge-info"
-                        }">${discussion.category}</span>
+                        <div class="discussion-badges">
+                            <span class="discussion-category badge ${
+                              categoryClasses[discussion.category] || "badge-info"
+                            }">${discussion.category}</span>
+                            <span class="approval-status badge ${
+                              approvalStatusClasses[discussion.doctorApprovalStatus] || "badge-warning"
+                            }">
+                                <i class="fas ${
+                                  discussion.doctorApprovalStatus === "approved" ? "fa-check-circle" :
+                                  discussion.doctorApprovalStatus === "not_approved" ? "fa-times-circle" :
+                                  "fa-clock"
+                                }"></i>
+                                ${approvalStatusLabels[discussion.doctorApprovalStatus] || "Pending Review"}
+                            </span>
+                        </div>
                     </div>
-                    <p class="discussion-preview">${discussion.preview}</p>
+                    <p class="discussion-preview">${this.escapeHtml(discussion.preview)}</p>
                     <div class="discussion-meta">
-                        <span class="discussion-author">by ${discussion.author}</span>
+                        <span class="discussion-author">by ${this.escapeHtml(discussion.author)}</span>
                         <span class="discussion-time">${
                           discussion.lastActivity || ""
                         }</span>
@@ -193,17 +237,175 @@ class ForumView {
                             ${discussion.views} views
                         </span>
                     </div>
-                    ${
-                      discussion.aiAnswer
-                        ? `<div class="discussion-ai-answer">
-                              <h4 class="ai-answer-title">AI Answer</h4>
-                              <p class="ai-answer-body">${discussion.aiAnswer}</p>
-                           </div>`
-                        : ""
-                    }
+                    
+                    ${discussion.aiAnswer ? `
+                    <div class="discussion-ai-answer">
+                        <div class="ai-answer-header">
+                            <h4 class="ai-answer-title">
+                                <i class="fas fa-robot"></i>
+                                AI Generated Answer
+                            </h4>
+                        </div>
+                        <p class="ai-answer-body">${this.escapeHtml(discussion.aiAnswer)}</p>
+                    </div>
+                    ` : ""}
+                    
+                    ${discussion.doctorApprovalStatus === "approved" && discussion.doctorComment ? `
+                    <div class="discussion-doctor-answer">
+                        <div class="doctor-answer-header">
+                            <h4 class="doctor-answer-title">
+                                <i class="fas fa-user-md"></i>
+                                Doctor's Review
+                                ${discussion.doctorName ? `<span class="doctor-name">by ${this.escapeHtml(discussion.doctorName)}</span>` : ""}
+                            </h4>
+                        </div>
+                        <p class="doctor-comment">${this.escapeHtml(discussion.doctorComment)}</p>
+                    </div>
+                    ` : ""}
+                    
+                    ${discussion.doctorApprovalStatus === "not_approved" && discussion.doctorAnswer ? `
+                    <div class="discussion-doctor-answer">
+                        <div class="doctor-answer-header">
+                            <h4 class="doctor-answer-title">
+                                <i class="fas fa-user-md"></i>
+                                Doctor's Answer
+                                ${discussion.doctorName ? `<span class="doctor-name">by ${this.escapeHtml(discussion.doctorName)}</span>` : ""}
+                            </h4>
+                        </div>
+                        <p class="doctor-answer-body">${this.escapeHtml(discussion.doctorAnswer)}</p>
+                    </div>
+                    ` : ""}
+                    
+                    ${canReview ? `
+                    <div class="doctor-review-panel">
+                        <p class="review-panel-title">Review AI Answer</p>
+                        <div class="review-actions">
+                            <button class="btn btn-small btn-success" onclick="if (window.forumController) window.forumController.showApproveModal(${discussion.id})">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="if (window.forumController) window.forumController.showDisapproveModal(${discussion.id})">
+                                <i class="fas fa-times"></i> Disapprove
+                            </button>
+                        </div>
+                    </div>
+                    ` : ""}
                 </div>
             </div>
         `;
+  }
+
+  escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  showApproveModal(questionId) {
+    const modal = document.createElement("div");
+    modal.className = "review-modal-overlay active";
+    modal.innerHTML = `
+      <div class="review-modal">
+        <div class="review-modal-header">
+          <h3>Approve AI Answer</h3>
+          <button class="review-modal-close" onclick="this.closest('.review-modal-overlay').remove()">&times;</button>
+        </div>
+        <div class="review-modal-body">
+          <form id="approveForm">
+            <input type="hidden" name="question_id" value="${questionId}">
+            <input type="hidden" name="action" value="approve">
+            <div class="form-group">
+              <label class="form-label">Add your comment (optional)</label>
+              <textarea class="form-textarea" name="doctor_comment" rows="4" placeholder="Add any additional notes or clarifications..."></textarea>
+            </div>
+            <div class="review-modal-footer">
+              <button type="button" class="btn btn-outline" onclick="this.closest('.review-modal-overlay').remove()">Cancel</button>
+              <button type="submit" class="btn btn-success">Approve Answer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+      modal.querySelector("#approveForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      if (window.forumController) {
+        await window.forumController.submitReview(formData);
+      }
+      modal.remove();
+    });
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  showDisapproveModal(questionId) {
+    const modal = document.createElement("div");
+    modal.className = "review-modal-overlay active";
+    modal.innerHTML = `
+      <div class="review-modal">
+        <div class="review-modal-header">
+          <h3>Disapprove AI Answer</h3>
+          <button class="review-modal-close" onclick="this.closest('.review-modal-overlay').remove()">&times;</button>
+        </div>
+        <div class="review-modal-body">
+          <form id="disapproveForm">
+            <input type="hidden" name="question_id" value="${questionId}">
+            <input type="hidden" name="action" value="disapprove">
+            <div class="form-group">
+              <label class="form-label">Provide your answer <span style="color: #dc2626;">*</span></label>
+              <textarea class="form-textarea" name="doctor_answer" rows="6" placeholder="Please provide your professional answer to replace the AI answer..." required></textarea>
+            </div>
+            <div class="review-modal-footer">
+              <button type="button" class="btn btn-outline" onclick="this.closest('.review-modal-overlay').remove()">Cancel</button>
+              <button type="submit" class="btn btn-danger">Submit Your Answer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector("#disapproveForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      if (window.forumController) {
+        await window.forumController.submitReview(formData);
+      }
+      modal.remove();
+    });
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  async submitReview(formData) {
+    try {
+      const response = await fetch("api/reviewQuestion.php", {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        MediQA.showNotification("Review submitted successfully", "success");
+      } else {
+        MediQA.showNotification(data.error || "Failed to submit review", "error");
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      MediQA.showNotification("An error occurred while submitting review", "error");
+    }
   }
 
   initializeFAQAccordions() {
@@ -239,9 +441,11 @@ class ForumView {
 }
 
 // Initialize forum controller when DOM is loaded
+let forumController = null;
 document.addEventListener("DOMContentLoaded", function () {
   // Initialize on the forum page (PHP route)
   if (document.querySelector(".discussions-list")) {
-    new ForumController();
+    forumController = new ForumController();
+    window.forumController = forumController; // Make it globally accessible
   }
 });

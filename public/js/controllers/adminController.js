@@ -63,33 +63,75 @@ class AdminController {
   }
 
   async loadDashboardData() {
-  fetch('api/getUsersCount.php', { credentials: 'same-origin' })
-    .then(response => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json();
-    })
-    .then(data => {
-      const el = document.getElementById('userCount');
-      const el1 = document.getElementById('userCount1');
-      if (!el || !el1) return;
-      if (data && data.success) {
-        el.textContent = Number(data.count).toLocaleString();
-        el1.textContent = Number(data.count).toLocaleString();
-      } else {
-        console.error('Error:', data && data.error);
-        el.textContent = '—';
-        el1.textContent = '—';
-      }
-    })
-    .catch(err => {
-      console.error('Fetch error:', err);
-      const el = document.getElementById('userCount');
-      if (el) el.textContent = '—';
-    });
+    // Load user count
+    fetch('api/getUsersCount.php', { credentials: 'same-origin' })
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        const el = document.getElementById('userCount');
+        const el1 = document.getElementById('userCount1');
+        if (!el || !el1) return;
+        if (data && data.success) {
+          el.textContent = Number(data.count).toLocaleString();
+          el1.textContent = Number(data.count).toLocaleString();
+        } else {
+          console.error('Error:', data && data.error);
+          el.textContent = '—';
+          el1.textContent = '—';
+        }
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        const el = document.getElementById('userCount');
+        if (el) el.textContent = '—';
+      });
 
-  // Load question count
-  this.loadQuestionsCount();
-}
+    // Load question count
+    this.loadQuestionsCount();
+
+    // Load dashboard stats (answers count, accuracy rate, recent activity)
+    try {
+      const response = await fetch('api/getDashboardStats.php', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+
+      if (data.success) {
+        // Update answers provided stat
+        const answersElement = document.getElementById('answersProvidedCount');
+        if (answersElement) {
+          answersElement.textContent = data.stats.answersProvided.toLocaleString();
+        }
+
+        // Update accuracy rate stat
+        const accuracyElement = document.getElementById('accuracyRate');
+        if (accuracyElement) {
+          accuracyElement.textContent = data.stats.accuracyRate + '%';
+        }
+
+        // Update stat change indicators (simplified)
+        const answersChangeElement = document.getElementById('answersChange');
+        if (answersChangeElement) {
+          answersChangeElement.textContent = data.stats.answersProvided > 0 ? 
+            `${data.stats.answersProvided} total answers` : 'No answers yet';
+        }
+
+        const accuracyChangeElement = document.getElementById('accuracyChange');
+        if (accuracyChangeElement) {
+          accuracyChangeElement.textContent = data.stats.accuracyRate > 0 ? 
+            `${data.stats.accuracyRate}% answered` : 'No data';
+        }
+
+        // Update recent activity
+        if (data.recentActivity && data.recentActivity.length > 0) {
+          this.dashboardView.updateRecentActivity(data.recentActivity);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    }
+  }
 
 
   showSection(sectionName) {
@@ -150,8 +192,17 @@ class AdminController {
       case "questions":
         await this.loadQuestionsData();
         break;
+      case "answers":
+        await this.loadAnswersData();
+        break;
+      case "forum":
+        await this.loadForumData();
+        break;
       case "analytics":
         await this.loadAnalyticsData();
+        break;
+      case "settings":
+        await this.loadSettingsData();
         break;
     }
   }
@@ -191,6 +242,74 @@ async loadUsersData() {
     }
   }
 
+  async loadAnswersData() {
+    try {
+      const answers = await this.adminModel.getAnswers();
+      this.dashboardView.updateAnswersGrid(answers);
+      
+      // Bind filter events
+      const statusFilter = document.getElementById('answerStatusFilter');
+      const categoryFilter = document.getElementById('answerCategoryFilter');
+      
+      if (statusFilter) {
+        statusFilter.addEventListener('change', () => this.filterAnswers());
+      }
+      if (categoryFilter) {
+        categoryFilter.addEventListener('change', () => this.filterAnswers());
+      }
+    } catch (error) {
+      MediQA.showNotification("Failed to load answers data", "error");
+    }
+  }
+
+  async filterAnswers() {
+    try {
+      const statusFilter = document.getElementById('answerStatusFilter')?.value || '';
+      const categoryFilter = document.getElementById('answerCategoryFilter')?.value || '';
+      const answers = await this.adminModel.getAnswers(statusFilter, categoryFilter);
+      this.dashboardView.updateAnswersGrid(answers);
+    } catch (error) {
+      console.error('Error filtering answers:', error);
+    }
+  }
+
+  async loadForumData() {
+    try {
+      const forumData = await this.adminModel.getForumData();
+      this.dashboardView.updateForumStats(forumData.stats);
+      this.dashboardView.updateForumGrid(forumData.questions);
+      
+      // Bind filter events
+      const statusFilter = document.getElementById('forumStatusFilter');
+      const categoryFilter = document.getElementById('forumCategoryFilter');
+      const sortFilter = document.getElementById('forumSortFilter');
+      
+      if (statusFilter) {
+        statusFilter.addEventListener('change', () => this.filterForum());
+      }
+      if (categoryFilter) {
+        categoryFilter.addEventListener('change', () => this.filterForum());
+      }
+      if (sortFilter) {
+        sortFilter.addEventListener('change', () => this.filterForum());
+      }
+    } catch (error) {
+      MediQA.showNotification("Failed to load forum data", "error");
+    }
+  }
+
+  async filterForum() {
+    try {
+      const statusFilter = document.getElementById('forumStatusFilter')?.value || '';
+      const categoryFilter = document.getElementById('forumCategoryFilter')?.value || '';
+      const sortFilter = document.getElementById('forumSortFilter')?.value || 'recent';
+      const forumData = await this.adminModel.getForumData(statusFilter, categoryFilter, sortFilter);
+      this.dashboardView.updateForumGrid(forumData.questions);
+    } catch (error) {
+      console.error('Error filtering forum:', error);
+    }
+  }
+
   async loadQuestionsCount() {
     try {
       const counts = await this.adminModel.getQuestionsCount();
@@ -205,7 +324,18 @@ async loadUsersData() {
       const analytics = await this.adminModel.getAnalytics();
       this.dashboardView.updateAnalytics(analytics);
     } catch (error) {
+      console.error('Failed to load analytics:', error);
       MediQA.showNotification("Failed to load analytics data", "error");
+    }
+  }
+
+  async loadSettingsData() {
+    try {
+      // Load settings from localStorage or use defaults
+      const settings = this.adminModel.getSettings();
+      this.dashboardView.updateSettings(settings);
+    } catch (error) {
+      console.error('Failed to load settings:', error);
     }
   }
 
@@ -220,6 +350,44 @@ async loadUsersData() {
       case "questions":
         this.searchQuestions(query);
         break;
+      case "answers":
+        this.searchAnswers(query);
+        break;
+      case "forum":
+        this.searchForum(query);
+        break;
+    }
+  }
+
+  async searchAnswers(query) {
+    try {
+      const answers = await this.adminModel.getAnswers();
+      const filtered = answers.filter(
+        (answer) =>
+          answer.title.toLowerCase().includes(query.toLowerCase()) ||
+          answer.body.toLowerCase().includes(query.toLowerCase()) ||
+          (answer.ai_answer && answer.ai_answer.toLowerCase().includes(query.toLowerCase())) ||
+          (answer.user_name && answer.user_name.toLowerCase().includes(query.toLowerCase()))
+      );
+      this.dashboardView.updateAnswersGrid(filtered);
+    } catch (error) {
+      MediQA.showNotification("Search failed", "error");
+    }
+  }
+
+  async searchForum(query) {
+    try {
+      const forumData = await this.adminModel.getForumData();
+      const filtered = forumData.questions.filter(
+        (question) =>
+          question.title.toLowerCase().includes(query.toLowerCase()) ||
+          question.body.toLowerCase().includes(query.toLowerCase()) ||
+          (question.user_name && question.user_name.toLowerCase().includes(query.toLowerCase())) ||
+          (question.category && question.category.toLowerCase().includes(query.toLowerCase()))
+      );
+      this.dashboardView.updateForumGrid(filtered);
+    } catch (error) {
+      MediQA.showNotification("Search failed", "error");
     }
   }
 
@@ -234,8 +402,14 @@ async loadUsersData() {
 
   async searchQuestions(query) {
     try {
-      const results = await this.adminModel.searchQuestions(query);
-      this.dashboardView.updateQuestionsGrid(results);
+      const questions = await this.adminModel.getQuestions();
+      const filtered = questions.filter(
+        (question) =>
+          question.title.toLowerCase().includes(query.toLowerCase()) ||
+          question.body.toLowerCase().includes(query.toLowerCase()) ||
+          (question.user_name && question.user_name.toLowerCase().includes(query.toLowerCase()))
+      );
+      this.dashboardView.updateQuestionsGrid(filtered);
     } catch (error) {
       MediQA.showNotification("Search failed", "error");
     }
@@ -253,9 +427,21 @@ async loadUsersData() {
     MediQA.showNotification(`Assigning question ${questionId} to provider...`, "info");
   }
 
-  viewQuestion(questionId) {
-    // TODO: Implement view question details functionality
-    MediQA.showNotification(`Viewing question ${questionId} details...`, "info");
+  async viewQuestion(questionId) {
+    try {
+      const response = await fetch(`api/getQuestionById.php?id=${questionId}`, { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+
+      if (data.success && data.question) {
+        this.dashboardView.showQuestionDetailsModal(data.question);
+      } else {
+        MediQA.showNotification(data.error || 'Failed to load question details', "error");
+      }
+    } catch (error) {
+      console.error('Error fetching question:', error);
+      MediQA.showNotification('Failed to load question details', "error");
+    }
   }
 
   markResolved(questionId) {
@@ -288,6 +474,53 @@ function viewQuestion(questionId) {
 function markResolved(questionId) {
   if (adminControllerInstance) {
     adminControllerInstance.markResolved(questionId);
+  }
+}
+
+function saveSettings(category) {
+  if (!adminControllerInstance) return;
+
+  const settings = {};
+  
+  if (category === 'general') {
+    settings.siteName = document.getElementById('siteName')?.value || '';
+    settings.siteDescription = document.getElementById('siteDescription')?.value || '';
+    settings.questionsPerPage = parseInt(document.getElementById('questionsPerPage')?.value) || 20;
+    settings.defaultSortOrder = document.getElementById('defaultSortOrder')?.value || 'recent';
+  } else if (category === 'notifications') {
+    settings.emailNewQuestion = document.getElementById('emailNewQuestion')?.checked || false;
+    settings.emailNewUser = document.getElementById('emailNewUser')?.checked || false;
+    settings.emailDailyReport = document.getElementById('emailDailyReport')?.checked || false;
+    settings.reportFrequency = document.getElementById('reportFrequency')?.value || 'weekly';
+  } else if (category === 'security') {
+    settings.minPasswordLength = parseInt(document.getElementById('minPasswordLength')?.value) || 8;
+    settings.requireUppercase = document.getElementById('requireUppercase')?.checked || false;
+    settings.requireNumbers = document.getElementById('requireNumbers')?.checked || false;
+    settings.requireSpecialChars = document.getElementById('requireSpecialChars')?.checked || false;
+    settings.sessionTimeout = parseInt(document.getElementById('sessionTimeout')?.value) || 30;
+  } else if (category === 'ai') {
+    settings.aiProvider = document.getElementById('aiProvider')?.value || 'deepseek';
+    settings.maxTokens = parseInt(document.getElementById('maxTokens')?.value) || 1000;
+    settings.temperature = parseFloat(document.getElementById('temperature')?.value) || 0.7;
+    settings.autoGenerateAnswers = document.getElementById('autoGenerateAnswers')?.checked !== false;
+    settings.requireReview = document.getElementById('requireReview')?.checked || false;
+  }
+
+  const success = adminControllerInstance.adminModel.saveSettings(category, settings);
+  if (success) {
+    MediQA.showNotification(`${category.charAt(0).toUpperCase() + category.slice(1)} settings saved successfully`, "success");
+  } else {
+    MediQA.showNotification("Failed to save settings", "error");
+  }
+}
+
+function resetSettings(category) {
+  if (!adminControllerInstance) return;
+  
+  if (confirm(`Are you sure you want to reset ${category} settings to defaults?`)) {
+    const defaultSettings = adminControllerInstance.adminModel.getSettings();
+    adminControllerInstance.dashboardView.updateSettings(defaultSettings);
+    MediQA.showNotification(`${category.charAt(0).toUpperCase() + category.slice(1)} settings reset to defaults`, "info");
   }
 }
 
@@ -397,7 +630,8 @@ class AdminModel {
 
   async getQuestions() {
     try {
-      const response = await fetch('/Medical_Q-A_MIU/public/api/getQuestions.php');
+      const response = await fetch('api/getQuestions.php', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       
       if (data.success) {
@@ -407,15 +641,14 @@ class AdminModel {
       }
     } catch (error) {
       console.error('Error fetching questions:', error);
-      // Fallback to dummy data if API fails
-      await this.simulateDelay();
-      return this.dummyData.questions;
+      throw error;
     }
   }
 
   async getQuestionsCount() {
     try {
-      const response = await fetch('/Medical_Q-A_MIU/public/api/getQuestionsCount.php');
+      const response = await fetch('api/getQuestionsCount.php', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       
       if (data.success) {
@@ -429,18 +662,152 @@ class AdminModel {
     }
   }
 
+  async getAnswers(statusFilter = '', categoryFilter = '') {
+    try {
+      let url = 'api/getQuestions.php';
+      const params = new URLSearchParams();
+      if (statusFilter) params.append('status', statusFilter);
+      if (categoryFilter) params.append('category', categoryFilter);
+      if (params.toString()) url += '?' + params.toString();
+      
+      const response = await fetch(url, { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Filter to only show questions with AI answers
+        return data.questions.filter(q => q.ai_answer && q.ai_answer.trim() !== '');
+      } else {
+        throw new Error(data.error || 'Failed to fetch answers');
+      }
+    } catch (error) {
+      console.error('Error fetching answers:', error);
+      throw error;
+    }
+  }
+
+  async getForumData(statusFilter = '', categoryFilter = '', sortBy = 'recent') {
+    try {
+      let url = 'api/getQuestions.php';
+      const params = new URLSearchParams();
+      if (statusFilter) params.append('status', statusFilter);
+      if (categoryFilter) params.append('category', categoryFilter);
+      if (params.toString()) url += '?' + params.toString();
+      
+      const response = await fetch(url, { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        let questions = data.questions;
+        
+        // Sort questions
+        switch (sortBy) {
+          case 'oldest':
+            questions.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            break;
+          case 'category':
+            questions.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+            break;
+          case 'recent':
+          default:
+            questions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            break;
+        }
+        
+        // Get forum statistics
+        const stats = {
+          total: questions.length,
+          answered: questions.filter(q => q.status === 'answered').length,
+          pending: questions.filter(q => q.status === 'pending').length,
+          categories: new Set(questions.map(q => q.category).filter(Boolean)).size
+        };
+        
+        return { questions, stats };
+      } else {
+        throw new Error(data.error || 'Failed to fetch forum data');
+      }
+    } catch (error) {
+      console.error('Error fetching forum data:', error);
+      throw error;
+    }
+  }
+
   async getRecentActivity() {
     await this.simulateDelay();
     return this.dummyData.activity;
   }
 
   async getAnalytics() {
-    await this.simulateDelay();
-    return {
-      userGrowth: [100, 120, 150, 180, 200, 250, 300],
-      questionVolume: [50, 65, 80, 75, 90, 85, 100],
-      responseTime: [2.5, 2.3, 2.1, 1.9, 1.8, 1.7, 1.6],
+    try {
+      const response = await fetch('api/getAnalytics.php', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        return data.analytics;
+      } else {
+        throw new Error(data.error || 'Failed to fetch analytics');
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      throw error;
+    }
+  }
+
+  getSettings() {
+    // Load settings from localStorage or return defaults
+    const defaultSettings = {
+      general: {
+        siteName: 'Medical Q&A',
+        siteDescription: 'Medical Q&A Platform for Community Health Support',
+        questionsPerPage: 20,
+        defaultSortOrder: 'recent'
+      },
+      notifications: {
+        emailNewQuestion: true,
+        emailNewUser: true,
+        emailDailyReport: false,
+        reportFrequency: 'weekly'
+      },
+      security: {
+        minPasswordLength: 8,
+        requireUppercase: false,
+        requireNumbers: false,
+        requireSpecialChars: false,
+        sessionTimeout: 30
+      },
+      ai: {
+        aiProvider: 'deepseek',
+        maxTokens: 1000,
+        temperature: 0.7,
+        autoGenerateAnswers: true,
+        requireReview: false
+      }
     };
+
+    try {
+      const stored = localStorage.getItem('adminSettings');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Error loading settings:', e);
+    }
+
+    return defaultSettings;
+  }
+
+  saveSettings(category, settings) {
+    try {
+      const allSettings = this.getSettings();
+      allSettings[category] = { ...allSettings[category], ...settings };
+      localStorage.setItem('adminSettings', JSON.stringify(allSettings));
+      return true;
+    } catch (e) {
+      console.error('Error saving settings:', e);
+      return false;
+    }
   }
 
   async searchUsers(query) {
@@ -670,6 +1037,239 @@ class DashboardView {
     }
   }
 
+  updateAnswersGrid(answers) {
+    const answersGrid = document.querySelector(".answers-grid");
+    if (answersGrid) {
+      if (answers.length === 0) {
+        answersGrid.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-comments" style="font-size: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
+            <p>No answers found</p>
+          </div>
+        `;
+        return;
+      }
+
+      answersGrid.innerHTML = answers
+        .map(
+          (answer) => `
+                <div class="answer-card">
+                    <div class="answer-header">
+                        <h4>${this.escapeHtml(answer.title)}</h4>
+                        <span class="badge badge-${
+                          answer.status === "pending" ? "warning" : 
+                          answer.status === "answered" ? "success" : "secondary"
+                        }">${answer.status.charAt(0).toUpperCase() + answer.status.slice(1)}</span>
+                    </div>
+                    <div class="answer-meta">
+                        <span class="answer-category badge badge-info">${
+                          this.escapeHtml(answer.category || 'N/A')
+                        }</span>
+                        <span class="answer-date">${answer.time_ago}</span>
+                    </div>
+                    <div class="answer-question">
+                        <strong>Question:</strong>
+                        <p>${this.escapeHtml(answer.body.substring(0, 200))}${answer.body.length > 200 ? '...' : ''}</p>
+                    </div>
+                    <div class="answer-content">
+                        <strong>AI Answer:</strong>
+                        <p>${this.escapeHtml(answer.ai_answer.substring(0, 300))}${answer.ai_answer.length > 300 ? '...' : ''}</p>
+                    </div>
+                    <div class="answer-user-info">
+                        <small>Asked by: ${this.escapeHtml(answer.user_name || 'Anonymous')}</small>
+                    </div>
+                    <div class="answer-actions">
+                        <button class="btn btn-small btn-outline" onclick="viewQuestion('${
+                          answer.id
+                        }')">View Full Details</button>
+                        ${answer.status === 'answered' ? 
+                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + answer.id + '\')">Mark Resolved</button>' : 
+                          ''
+                        }
+                    </div>
+                </div>
+            `
+        )
+        .join("");
+    }
+  }
+
+  updateForumStats(stats) {
+    const totalElement = document.getElementById('forumTotalQuestions');
+    const answeredElement = document.getElementById('forumAnsweredQuestions');
+    const pendingElement = document.getElementById('forumPendingQuestions');
+    const categoriesElement = document.getElementById('forumCategories');
+
+    if (totalElement) totalElement.textContent = stats.total.toLocaleString();
+    if (answeredElement) answeredElement.textContent = stats.answered.toLocaleString();
+    if (pendingElement) pendingElement.textContent = stats.pending.toLocaleString();
+    if (categoriesElement) categoriesElement.textContent = stats.categories.toLocaleString();
+  }
+
+  updateForumGrid(questions) {
+    const forumGrid = document.querySelector(".forum-management-grid");
+    if (forumGrid) {
+      if (questions.length === 0) {
+        forumGrid.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-comments" style="font-size: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
+            <p>No forum discussions found</p>
+          </div>
+        `;
+        return;
+      }
+
+      forumGrid.innerHTML = questions
+        .map(
+          (question) => `
+                <div class="forum-discussion-card">
+                    <div class="forum-discussion-header">
+                        <div class="forum-discussion-title-section">
+                            <h4>${this.escapeHtml(question.title)}</h4>
+                            <div class="forum-discussion-meta">
+                                <span class="badge badge-${
+                                  question.status === "pending" ? "warning" : 
+                                  question.status === "answered" ? "success" : "secondary"
+                                }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
+                                <span class="badge badge-info">${this.escapeHtml(question.category || 'N/A')}</span>
+                                <span class="forum-date">${question.time_ago}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="forum-discussion-content">
+                        <p>${this.escapeHtml(question.body.substring(0, 150))}${question.body.length > 150 ? '...' : ''}</p>
+                    </div>
+                    <div class="forum-discussion-info">
+                        <div class="forum-user-info">
+                            <i class="fas fa-user"></i>
+                            <span>${this.escapeHtml(question.user_name || 'Anonymous')}</span>
+                        </div>
+                        <div class="forum-answer-status">
+                            ${question.ai_answer ? 
+                              '<i class="fas fa-check-circle" style="color: #10b981;"></i> <span>Answered</span>' : 
+                              '<i class="fas fa-clock" style="color: #f59e0b;"></i> <span>Pending</span>'
+                            }
+                        </div>
+                    </div>
+                    <div class="forum-discussion-actions">
+                        <button class="btn btn-small btn-outline" onclick="viewQuestion('${
+                          question.id
+                        }')">View Details</button>
+                        ${question.ai_answer ? 
+                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + question.id + '\')">Mark Resolved</button>' : 
+                          '<button class="btn btn-small btn-primary" onclick="assignQuestion(\'' + question.id + '\')">Assign</button>'
+                        }
+                    </div>
+                </div>
+            `
+        )
+        .join("");
+    }
+  }
+
+  showQuestionDetailsModal(question) {
+    // Remove any existing modals
+    const existingModal = document.querySelector('.modal-overlay');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Create and show question details modal
+    const modal = document.createElement("div");
+    modal.className = "modal-overlay active";
+    modal.innerHTML = `
+            <div class="modal" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">Question Details</h3>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                </div>
+                <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                    <div class="question-details">
+                        <div class="question-detail-section">
+                            <h4>Question Information</h4>
+                            <div class="detail-row">
+                                <strong>Title:</strong>
+                                <span>${this.escapeHtml(question.title)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Category:</strong>
+                                <span class="badge badge-info">${this.escapeHtml(question.category || 'N/A')}</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Status:</strong>
+                                <span class="badge badge-${
+                                  question.status === "pending" ? "warning" : 
+                                  question.status === "answered" ? "success" : "secondary"
+                                }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Asked by:</strong>
+                                <span>${this.escapeHtml(question.user_name || 'Anonymous')} (${this.escapeHtml(question.user_email || 'N/A')})</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Date:</strong>
+                                <span>${this.formatDate(question.created_at)} (${question.time_ago})</span>
+                            </div>
+                        </div>
+
+                        <div class="question-detail-section">
+                            <h4>Question Description</h4>
+                            <div class="question-body">
+                                ${this.formatText(question.body)}
+                            </div>
+                        </div>
+
+                        ${question.ai_answer ? `
+                        <div class="question-detail-section">
+                            <h4>AI Generated Answer</h4>
+                            <div class="ai-answer">
+                                ${this.formatText(question.ai_answer)}
+                            </div>
+                        </div>
+                        ` : `
+                        <div class="question-detail-section">
+                            <h4>AI Generated Answer</h4>
+                            <div class="ai-answer no-answer">
+                                <p style="color: #999; font-style: italic;">No AI answer available yet.</p>
+                            </div>
+                        </div>
+                        `}
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                    ${question.status !== 'answered' ? `
+                    <button class="btn btn-primary" onclick="assignQuestion('${question.id}'); this.closest('.modal-overlay').remove();">Assign to Provider</button>
+                    ` : ''}
+                    ${question.status === 'answered' ? `
+                    <button class="btn btn-success" onclick="markResolved('${question.id}'); this.closest('.modal-overlay').remove();">Mark Resolved</button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    document.body.appendChild(modal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  formatText(text) {
+    if (!text) return '';
+    // Convert line breaks to <br> tags
+    return this.escapeHtml(text).replace(/\n/g, '<br>');
+  }
+
   showNotificationsModal(notifications) {
     // Create and show notifications modal
     const modal = document.createElement("div");
@@ -714,18 +1314,317 @@ class DashboardView {
   }
 
   initializeCharts() {
-    // Initialize chart placeholders
-    // In a real application, you would integrate with Chart.js or similar
-    const chartPlaceholder = document.querySelector(".chart-placeholder");
-    if (chartPlaceholder) {
-      // Add some interactive elements
-      chartPlaceholder.addEventListener("click", () => {
-        MediQA.showNotification(
-          "Chart functionality would be implemented here",
-          "info"
-        );
-      });
+    // Charts will be initialized when analytics data is loaded
+  }
+
+  updateAnalytics(analytics) {
+    if (!analytics) return;
+
+    // Update key metrics
+    const avgResponseTimeEl = document.getElementById('avgResponseTime');
+    if (avgResponseTimeEl) {
+      avgResponseTimeEl.textContent = analytics.avgResponseTime 
+        ? `${analytics.avgResponseTime} minutes` 
+        : 'N/A';
     }
+
+    const topCategoryEl = document.getElementById('topCategory');
+    if (topCategoryEl && analytics.topCategories && analytics.topCategories.length > 0) {
+      topCategoryEl.textContent = analytics.topCategories[0].category || 'N/A';
+    }
+
+    const totalCategoriesEl = document.getElementById('totalCategories');
+    if (totalCategoriesEl && analytics.categoryDistribution) {
+      totalCategoriesEl.textContent = analytics.categoryDistribution.length;
+    }
+
+    // Initialize charts
+    this.initUserGrowthChart(analytics.userGrowth);
+    this.initQuestionVolumeChart(analytics.questionVolume, analytics.answersProvided);
+    this.initCategoryDistributionChart(analytics.categoryDistribution);
+    this.initStatusDistributionChart(analytics.statusDistribution);
+    this.initMonthlyUsersChart(analytics.monthlyUsers);
+    this.initMonthlyQuestionsChart(analytics.monthlyQuestions);
+  }
+
+  initUserGrowthChart(data) {
+    const ctx = document.getElementById('userGrowthChart');
+    if (!ctx || !data) return;
+
+    const labels = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    }
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Total Users',
+          data: data,
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  initQuestionVolumeChart(questionData, answerData) {
+    const ctx = document.getElementById('questionVolumeChart');
+    if (!ctx || !questionData) return;
+
+    const labels = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    }
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Questions',
+            data: questionData,
+            backgroundColor: '#3b82f6'
+          },
+          {
+            label: 'Answers',
+            data: answerData || [],
+            backgroundColor: '#10b981'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  initCategoryDistributionChart(data) {
+    const container = document.getElementById('categoryDistributionChart');
+    if (!container || !data || data.length === 0) {
+      if (container) container.innerHTML = '<p class="text-muted">No category data available</p>';
+      return;
+    }
+
+    const ctx = document.createElement('canvas');
+    container.innerHTML = '';
+    container.appendChild(ctx);
+
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: data.map(d => d.category),
+        datasets: [{
+          data: data.map(d => d.count),
+          backgroundColor: [
+            '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+  }
+
+  initStatusDistributionChart(data) {
+    const container = document.getElementById('statusDistributionChart');
+    if (!container || !data || data.length === 0) {
+      if (container) container.innerHTML = '<p class="text-muted">No status data available</p>';
+      return;
+    }
+
+    const ctx = document.createElement('canvas');
+    container.innerHTML = '';
+    container.appendChild(ctx);
+
+    const statusColors = {
+      'pending': '#f59e0b',
+      'answered': '#10b981',
+      'closed': '#6b7280'
+    };
+
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: data.map(d => d.status.charAt(0).toUpperCase() + d.status.slice(1)),
+        datasets: [{
+          data: data.map(d => d.count),
+          backgroundColor: data.map(d => statusColors[d.status] || '#6b7280')
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+  }
+
+  initMonthlyUsersChart(data) {
+    const ctx = document.getElementById('monthlyUsersChart');
+    if (!ctx || !data) return;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.month),
+        datasets: [{
+          label: 'New Users',
+          data: data.map(d => d.count),
+          backgroundColor: '#2563eb'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  initMonthlyQuestionsChart(data) {
+    const ctx = document.getElementById('monthlyQuestionsChart');
+    if (!ctx || !data) return;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.month),
+        datasets: [{
+          label: 'Questions',
+          data: data.map(d => d.count),
+          backgroundColor: '#10b981'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  updateSettings(settings) {
+    if (!settings) return;
+
+    // General settings
+    if (settings.general) {
+      const siteName = document.getElementById('siteName');
+      const siteDescription = document.getElementById('siteDescription');
+      const questionsPerPage = document.getElementById('questionsPerPage');
+      const defaultSortOrder = document.getElementById('defaultSortOrder');
+
+      if (siteName) siteName.value = settings.general.siteName || '';
+      if (siteDescription) siteDescription.value = settings.general.siteDescription || '';
+      if (questionsPerPage) questionsPerPage.value = settings.general.questionsPerPage || 20;
+      if (defaultSortOrder) defaultSortOrder.value = settings.general.defaultSortOrder || 'recent';
+    }
+
+    // Notification settings
+    if (settings.notifications) {
+      const emailNewQuestion = document.getElementById('emailNewQuestion');
+      const emailNewUser = document.getElementById('emailNewUser');
+      const emailDailyReport = document.getElementById('emailDailyReport');
+      const reportFrequency = document.getElementById('reportFrequency');
+
+      if (emailNewQuestion) emailNewQuestion.checked = settings.notifications.emailNewQuestion || false;
+      if (emailNewUser) emailNewUser.checked = settings.notifications.emailNewUser || false;
+      if (emailDailyReport) emailDailyReport.checked = settings.notifications.emailDailyReport || false;
+      if (reportFrequency) reportFrequency.value = settings.notifications.reportFrequency || 'weekly';
+    }
+
+    // Security settings
+    if (settings.security) {
+      const minPasswordLength = document.getElementById('minPasswordLength');
+      const requireUppercase = document.getElementById('requireUppercase');
+      const requireNumbers = document.getElementById('requireNumbers');
+      const requireSpecialChars = document.getElementById('requireSpecialChars');
+      const sessionTimeout = document.getElementById('sessionTimeout');
+
+      if (minPasswordLength) minPasswordLength.value = settings.security.minPasswordLength || 8;
+      if (requireUppercase) requireUppercase.checked = settings.security.requireUppercase || false;
+      if (requireNumbers) requireNumbers.checked = settings.security.requireNumbers || false;
+      if (requireSpecialChars) requireSpecialChars.checked = settings.security.requireSpecialChars || false;
+      if (sessionTimeout) sessionTimeout.value = settings.security.sessionTimeout || 30;
+    }
+
+    // AI settings
+    if (settings.ai) {
+      const aiProvider = document.getElementById('aiProvider');
+      const maxTokens = document.getElementById('maxTokens');
+      const temperature = document.getElementById('temperature');
+      const autoGenerateAnswers = document.getElementById('autoGenerateAnswers');
+      const requireReview = document.getElementById('requireReview');
+
+      if (aiProvider) aiProvider.value = settings.ai.aiProvider || 'deepseek';
+      if (maxTokens) maxTokens.value = settings.ai.maxTokens || 1000;
+      if (temperature) temperature.value = settings.ai.temperature || 0.7;
+      if (autoGenerateAnswers) autoGenerateAnswers.checked = settings.ai.autoGenerateAnswers !== false;
+      if (requireReview) requireReview.checked = settings.ai.requireReview || false;
+    }
+
+    // Initialize settings tabs
+    this.initSettingsTabs();
+  }
+
+  initSettingsTabs() {
+    const tabs = document.querySelectorAll('.settings-tab');
+    const contents = document.querySelectorAll('.settings-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+
+        // Remove active class from all tabs and contents
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+
+        // Add active class to clicked tab and corresponding content
+        tab.classList.add('active');
+        const targetContent = document.getElementById(`${targetTab}-settings`);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+      });
+    });
   }
 }
 
@@ -751,10 +1650,9 @@ window.assignQuestion = function (questionId) {
 };
 
 window.viewQuestion = function (questionId) {
-  MediQA.showNotification(
-    `View question ${questionId} functionality would be implemented here`,
-    "info"
-  );
+  if (adminControllerInstance) {
+    adminControllerInstance.viewQuestion(questionId);
+  }
 };
 
 // Initialize admin controller when DOM is loaded

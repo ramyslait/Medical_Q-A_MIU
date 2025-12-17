@@ -276,7 +276,17 @@
   <!-- Scripts -->
   <script src="js/main.js"></script>
   <script src="js/controllers/forumController.js"></script>
+  <?php 
+  if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+  }
+  $currentUser = $_SESSION['user'] ?? null;
+  ?>
   <script>
+    // Pass user role to JavaScript
+    window.currentUserRole = <?php echo json_encode($currentUser['role'] ?? null); ?>;
+    window.currentUserId = <?php echo json_encode($currentUser['id'] ?? null); ?>;
+    
     function startNewDiscussion() {
       if (!MediQA.isLoggedIn) {
         MediQA.showNotification(
@@ -288,11 +298,7 @@
         }, 1500);
         return;
       }
-      // In a real app, this would open a new discussion form or redirect to a new discussion page
-      MediQA.showNotification(
-        "New discussion feature would be implemented here",
-        "info"
-      );
+      window.location.href = "ask-question";
     }
   </script>
 </body>

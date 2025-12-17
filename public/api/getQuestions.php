@@ -6,8 +6,24 @@ header('Content-Type: application/json');
 try {
     $conn = Database::getConnection();
 
-    // Query questions with user information
-    $stmt = $conn->query("
+    // Build query with optional filters
+    $whereConditions = [];
+    $params = [];
+
+    if (isset($_GET['status']) && !empty($_GET['status'])) {
+        $whereConditions[] = "q.status = :status";
+        $params[':status'] = $_GET['status'];
+    }
+
+    if (isset($_GET['category']) && !empty($_GET['category'])) {
+        $whereConditions[] = "q.category = :category";
+        $params[':category'] = $_GET['category'];
+    }
+
+    $whereClause = !empty($whereConditions) ? "WHERE " . implode(" AND ", $whereConditions) : "";
+
+    // Query questions with user information and doctor review data
+    $sql = "
         SELECT 
             q.id,
             q.title,
@@ -16,12 +32,23 @@ try {
             q.status,
             q.created_at,
             q.ai_answer,
+            q.doctor_approval_status,
+            q.doctor_answer,
+            q.doctor_comment,
+            q.doctor_reviewed_at,
             u.name as user_name,
-            u.email as user_email
+            u.email as user_email,
+            d.name as doctor_name,
+            d.id as doctor_id
         FROM questions q
         LEFT JOIN users u ON q.user_id = u.id
+        LEFT JOIN users d ON q.doctor_id = d.id
+        $whereClause
         ORDER BY q.created_at DESC
-    ");
+    ";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $questions = array_map(function ($q) {
@@ -33,6 +60,12 @@ try {
             'status' => $q['status'],
             'created_at' => $q['created_at'],
             'ai_answer' => $q['ai_answer'],
+            'doctor_approval_status' => $q['doctor_approval_status'] ?? 'pending',
+            'doctor_answer' => $q['doctor_answer'],
+            'doctor_comment' => $q['doctor_comment'],
+            'doctor_reviewed_at' => $q['doctor_reviewed_at'],
+            'doctor_name' => $q['doctor_name'],
+            'doctor_id' => $q['doctor_id'],
             'user_name' => $q['user_name'],
             'user_email' => $q['user_email'],
             'preview' => substr($q['body'], 0, 100) . (strlen($q['body']) > 100 ? '...' : ''),
