@@ -30,7 +30,7 @@ try {
     $answersProvided = [];
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-$i days"));
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM questions WHERE DATE(created_at) = ? AND ai_answer IS NOT NULL AND ai_answer != ''");
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM questions WHERE DATE(created_at) = ? AND ai_approved = 1");
         $stmt->execute([$date]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $answersProvided[] = (int)$result['count'];

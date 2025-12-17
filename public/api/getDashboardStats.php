@@ -6,8 +6,8 @@ header('Content-Type: application/json');
 try {
     $conn = Database::getConnection();
 
-    // Get total answers count (questions with ai_answer)
-    $stmt = $conn->query("SELECT COUNT(*) as total FROM questions WHERE ai_answer IS NOT NULL AND ai_answer != ''");
+    // Get total answers count (questions approved by doctor)
+    $stmt = $conn->query("SELECT COUNT(*) as total FROM questions WHERE ai_approved = 1");
     $answersCount = $stmt->fetch()['total'];
 
     // Get total questions count

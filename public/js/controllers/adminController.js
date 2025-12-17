@@ -992,16 +992,9 @@ class DashboardView {
                         <small>Asked by: ${question.user_name || 'Anonymous'}</small>
                     </div>
                     <div class="question-actions">
-                        <button class="btn btn-small btn-primary" onclick="assignQuestion('${
-                          question.id
-                        }')">Assign to Provider</button>
                         <button class="btn btn-small btn-outline" onclick="viewQuestion('${
                           question.id
                         }')">View Details</button>
-                        ${question.status === 'answered' ? 
-                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + question.id + '\')">Mark Resolved</button>' : 
-                          ''
-                        }
                     </div>
                 </div>
             `
@@ -1082,10 +1075,6 @@ class DashboardView {
                         <button class="btn btn-small btn-outline" onclick="viewQuestion('${
                           answer.id
                         }')">View Full Details</button>
-                        ${answer.status === 'answered' ? 
-                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + answer.id + '\')">Mark Resolved</button>' : 
-                          ''
-                        }
                     </div>
                 </div>
             `
@@ -1155,10 +1144,6 @@ class DashboardView {
                         <button class="btn btn-small btn-outline" onclick="viewQuestion('${
                           question.id
                         }')">View Details</button>
-                        ${question.ai_answer ? 
-                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + question.id + '\')">Mark Resolved</button>' : 
-                          '<button class="btn btn-small btn-primary" onclick="assignQuestion(\'' + question.id + '\')">Assign</button>'
-                        }
                     </div>
                 </div>
             `
@@ -1238,12 +1223,6 @@ class DashboardView {
                 </div>
                 <div class="modal-footer" style="padding: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.5rem; justify-content: flex-end;">
                     <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
-                    ${question.status !== 'answered' ? `
-                    <button class="btn btn-primary" onclick="assignQuestion('${question.id}'); this.closest('.modal-overlay').remove();">Assign to Provider</button>
-                    ` : ''}
-                    ${question.status === 'answered' ? `
-                    <button class="btn btn-success" onclick="markResolved('${question.id}'); this.closest('.modal-overlay').remove();">Mark Resolved</button>
-                    ` : ''}
                 </div>
             </div>
         `;
