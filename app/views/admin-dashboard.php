@@ -375,7 +375,7 @@
         <div class="filter-bar" style="margin-bottom: 1.5rem;">
           <select id="answerStatusFilter" class="filter-select" style="max-width: 200px;">
             <option value="">All Answers</option>
-            <option value="answered">Answered</option>
+            <option value="answered">AI Generated Answers</option>
             <option value="pending">Pending</option>
             <option value="closed">Closed</option>
           </select>
@@ -412,7 +412,7 @@
           </div>
           <div class="stat-card-small">
             <div class="stat-number-small" id="forumAnsweredQuestions">0</div>
-            <div class="stat-label-small">Answered</div>
+            <div class="stat-label-small">AI Generated Answers</div>
           </div>
           <div class="stat-card-small">
             <div class="stat-number-small" id="forumPendingQuestions">0</div>
@@ -428,7 +428,7 @@
           <select id="forumStatusFilter" class="filter-select" style="max-width: 200px;">
             <option value="">All Status</option>
             <option value="pending">Pending</option>
-            <option value="answered">Answered</option>
+            <option value="answered">AI Generated Answers</option>
             <option value="closed">Closed</option>
           </select>
           <select id="forumCategoryFilter" class="filter-select" style="max-width: 200px;">

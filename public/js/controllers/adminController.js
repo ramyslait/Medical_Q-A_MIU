@@ -979,7 +979,7 @@ class DashboardView {
                         <span class="badge badge-${
                           question.status === "pending" ? "warning" : 
                           question.status === "answered" ? "success" : "secondary"
-                        }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
+                        }">${question.status === "answered" ? "AI Generated Answer" : question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
                     </div>
                     <div class="question-meta">
                         <span class="question-category">${
@@ -1052,7 +1052,7 @@ class DashboardView {
                         <span class="badge badge-${
                           answer.status === "pending" ? "warning" : 
                           answer.status === "answered" ? "success" : "secondary"
-                        }">${answer.status.charAt(0).toUpperCase() + answer.status.slice(1)}</span>
+                        }">${answer.status === "answered" ? "AI Generated Answer" : answer.status.charAt(0).toUpperCase() + answer.status.slice(1)}</span>
                     </div>
                     <div class="answer-meta">
                         <span class="answer-category badge badge-info">${
@@ -1119,7 +1119,7 @@ class DashboardView {
                                 <span class="badge badge-${
                                   question.status === "pending" ? "warning" : 
                                   question.status === "answered" ? "success" : "secondary"
-                                }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
+                                }">${question.status === "answered" ? "AI Generated Answer" : question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
                                 <span class="badge badge-info">${this.escapeHtml(question.category || 'N/A')}</span>
                                 <span class="forum-date">${question.time_ago}</span>
                             </div>
@@ -1135,7 +1135,7 @@ class DashboardView {
                         </div>
                         <div class="forum-answer-status">
                             ${question.ai_answer ? 
-                              '<i class="fas fa-check-circle" style="color: #10b981;"></i> <span>Answered</span>' : 
+                              '<i class="fas fa-check-circle" style="color: #10b981;"></i> <span>AI Generated Answer</span>' : 
                               '<i class="fas fa-clock" style="color: #f59e0b;"></i> <span>Pending</span>'
                             }
                         </div>
@@ -1185,7 +1185,7 @@ class DashboardView {
                                 <span class="badge badge-${
                                   question.status === "pending" ? "warning" : 
                                   question.status === "answered" ? "success" : "secondary"
-                                }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
+                                }">${question.status === "answered" ? "AI Generated Answer" : question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
                             </div>
                             <div class="detail-row">
                                 <strong>Asked by:</strong>

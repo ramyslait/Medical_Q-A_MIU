@@ -25,8 +25,24 @@
         $qstmt = $pdo->prepare("SELECT q.id, q.title, q.body, q.ai_answer, q.ai_approved, q.ai_generated, q.created_at, u.username FROM questions q LEFT JOIN users u ON q.user_id = u.id ORDER BY q.created_at DESC LIMIT 20");
         $qstmt->execute();
         $questions = $qstmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Load forum statistics
+        $activeDiscussionsStmt = $pdo->prepare("SELECT COUNT(*) as count FROM questions WHERE ai_answer IS NOT NULL");
+        $activeDiscussionsStmt->execute();
+        $activeDiscussions = $activeDiscussionsStmt->fetch(PDO::FETCH_ASSOC)['count'];
+
+        $totalPostsStmt = $pdo->prepare("SELECT COUNT(*) as count FROM questions");
+        $totalPostsStmt->execute();
+        $totalPosts = $totalPostsStmt->fetch(PDO::FETCH_ASSOC)['count'];
+
+        $communityMembersStmt = $pdo->prepare("SELECT COUNT(*) as count FROM users");
+        $communityMembersStmt->execute();
+        $communityMembers = $communityMembersStmt->fetch(PDO::FETCH_ASSOC)['count'];
     } catch (Exception $e) {
         $questions = [];
+        $activeDiscussions = 0;
+        $totalPosts = 0;
+        $communityMembers = 0;
     }
   ?>
 
@@ -77,15 +93,15 @@
           <div class="stats-card">
             <h3>Forum Statistics</h3>
             <div class="stat-item">
-              <span class="stat-number">156</span>
-              <span class="stat-label">Active Discussions</span>
+              <span class="stat-number"><?php echo htmlspecialchars($activeDiscussions); ?></span>
+              <span class="stat-label">AI Generated Answers</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number">2,847</span>
-              <span class="stat-label">Total Posts</span>
+              <span class="stat-number"><?php echo htmlspecialchars($totalPosts); ?></span>
+              <span class="stat-label">Total Questions</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number">1,234</span>
+              <span class="stat-number"><?php echo htmlspecialchars($communityMembers); ?></span>
               <span class="stat-label">Community Members</span>
             </div>
           </div>
