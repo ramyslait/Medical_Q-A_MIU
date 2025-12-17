@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
    <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/main.js"></script>
   <script src="js/controllers/adminController.js"></script>
 
@@ -174,14 +175,14 @@
 
           <div class="stat-card">
             <div class="stat-icon">
-              <i class="fas fa-question-circle"></i>
+              <i class="fas fa-robot"></i>
             </div>
             <div class="stat-content">
-              <div id="pendingQuestionsCount" class="stat-number">0</div>
-              <div class="stat-label">Pending Questions</div>
-              <div class="stat-change negative">
+              <div id="aiAnsweredQuestionsCount" class="stat-number">0</div>
+              <div class="stat-label">Answered by AI Questions</div>
+              <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
-                <span id="pendingQuestionsChange">+0 today</span>
+                <span id="aiAnsweredQuestionsChange">+0 today</span>
               </div>
             </div>
           </div>
@@ -196,20 +197,6 @@
               <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
                 <span id="answersChange">Loading...</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon">
-              <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="stat-content">
-              <div id="accuracyRate" class="stat-number">0%</div>
-              <div class="stat-label">Accuracy Rate</div>
-              <div class="stat-change positive">
-                <i class="fas fa-arrow-up"></i>
-                <span id="accuracyChange">Loading...</span>
               </div>
             </div>
           </div>

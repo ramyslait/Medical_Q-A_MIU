@@ -104,23 +104,11 @@ class AdminController {
           answersElement.textContent = data.stats.answersProvided.toLocaleString();
         }
 
-        // Update accuracy rate stat
-        const accuracyElement = document.getElementById('accuracyRate');
-        if (accuracyElement) {
-          accuracyElement.textContent = data.stats.accuracyRate + '%';
-        }
-
         // Update stat change indicators (simplified)
         const answersChangeElement = document.getElementById('answersChange');
         if (answersChangeElement) {
           answersChangeElement.textContent = data.stats.answersProvided > 0 ? 
             `${data.stats.answersProvided} total answers` : 'No answers yet';
-        }
-
-        const accuracyChangeElement = document.getElementById('accuracyChange');
-        if (accuracyChangeElement) {
-          accuracyChangeElement.textContent = data.stats.accuracyRate > 0 ? 
-            `${data.stats.accuracyRate}% answered` : 'No data';
         }
 
         // Update recent activity
@@ -539,7 +527,6 @@ class AdminModel {
         totalUsers: 1234,
         pendingQuestions: 45,
         answersProvided: 2156,
-        accuracyRate: 95.2,
       },
       users: [
         {
@@ -1015,18 +1002,18 @@ class DashboardView {
     }
 
     // Update stat card
-    const pendingCountElement = document.getElementById('pendingQuestionsCount');
-    if (pendingCountElement) {
-      pendingCountElement.textContent = counts.pending;
+    const aiAnsweredCountElement = document.getElementById('aiAnsweredQuestionsCount');
+    if (aiAnsweredCountElement) {
+      aiAnsweredCountElement.textContent = counts.answered;
     }
 
     // Update stat change (simplified - in real app you'd calculate daily change)
-    const pendingChangeElement = document.getElementById('pendingQuestionsChange');
-    if (pendingChangeElement) {
-      const changeText = counts.pending > 0 ? 
-        `+${counts.pending} pending` : 
-        'All answered!';
-      pendingChangeElement.textContent = changeText;
+    const aiAnsweredChangeElement = document.getElementById('aiAnsweredQuestionsChange');
+    if (aiAnsweredChangeElement) {
+      const changeText = counts.answered > 0 ? 
+        `+${counts.answered} AI answered` : 
+        'No AI answers yet';
+      aiAnsweredChangeElement.textContent = changeText;
     }
   }
 

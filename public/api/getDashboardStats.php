@@ -14,9 +14,6 @@ try {
     $stmt = $conn->query("SELECT COUNT(*) as total FROM questions");
     $totalQuestions = $stmt->fetch()['total'];
 
-    // Calculate accuracy rate (answered questions / total questions * 100)
-    $accuracyRate = $totalQuestions > 0 ? round(($answersCount / $totalQuestions) * 100, 1) : 0;
-
     // Get recent activity (last 5 questions and last 3 users)
     $stmt = $conn->query("
         SELECT 
@@ -73,7 +70,6 @@ try {
         'success' => true,
         'stats' => [
             'answersProvided' => (int)$answersCount,
-            'accuracyRate' => $accuracyRate,
             'totalQuestions' => (int)$totalQuestions
         ],
         'recentActivity' => $formattedActivity

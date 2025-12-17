@@ -14,8 +14,8 @@ try {
     $stmt = $conn->query("SELECT COUNT(*) as pending FROM questions WHERE status = 'pending'");
     $pendingCount = $stmt->fetch()['pending'];
 
-    // Get answered questions count
-    $stmt = $conn->query("SELECT COUNT(*) as answered FROM questions WHERE status = 'answered'");
+    // Get answered questions count (questions with AI answers)
+    $stmt = $conn->query("SELECT COUNT(*) as answered FROM questions WHERE ai_answer IS NOT NULL");
     $answeredCount = $stmt->fetch()['answered'];
 
     // Get closed questions count
