@@ -2,9 +2,8 @@
 // Safe session start
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
-}
+} 
 
-// Require dependencies
 require_once '../../config/db.php';
 require_once '../../utils/mailer.php';
 

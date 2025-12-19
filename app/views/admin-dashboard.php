@@ -7,23 +7,26 @@
   <title>Admin Dashboard - Medical Q&A</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
-   <!-- Scripts -->
+  <!-- Scripts -->
   <script src="js/main.js"></script>
   <script src="js/controllers/adminController.js"></script>
 
-  <?php if (session_status() === PHP_SESSION_NONE) { session_start(); } $user = $_SESSION['user'] ?? null; ?>
+  <?php if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+  }
+  $user = $_SESSION['user'] ?? null; ?>
   <?php
-    // DB connection for admin widgets
-    require_once __DIR__ . '/../../config/db.php';
-    $pdo = Database::getConnection();
+  // DB connection for admin widgets
+  require_once __DIR__ . '/../../config/db.php';
+  $pdo = Database::getConnection();
   ?>
   <script>
     // Bridge server session -> client state so client-side auth doesn't misfire
     window.MediQA = window.MediQA || {};
     <?php if ($user): ?>
-    MediQA.currentUser = <?php echo json_encode($user); ?>;
-    MediQA.isLoggedIn = true;
-    MediQA.userRole = <?php echo json_encode($user['role'] ?? null); ?>;
+      MediQA.currentUser = <?php echo json_encode($user); ?>;
+      MediQA.isLoggedIn = true;
+      MediQA.userRole = <?php echo json_encode($user['role'] ?? null); ?>;
     <?php endif; ?>
   </script>
 
@@ -104,10 +107,6 @@
 
     <div class="sidebar-footer">
       <div class="user-info">
-        <img
-          src="https://via.placeholder.com/40/2563eb/ffffff?text=<?php echo strtoupper(substr($user['name'] ?? 'A', 0, 2)); ?>"
-          alt="User Avatar"
-          class="user-avatar" />
         <div class="user-details">
           <div class="user-name"><?php echo htmlspecialchars($user['name'] ?? 'Administrator'); ?></div>
           <div class="user-role"><?php echo ucfirst($user['role'] ?? 'Administrator'); ?></div>
@@ -308,7 +307,7 @@
               </tr>
             </thead>
             <tbody>
-              
+
             </tbody>
           </table>
         </div>
@@ -323,44 +322,44 @@
 
         <div class="questions-grid">
           <?php
-            // Fetch pending AI-generated answers awaiting approval
-            try {
-                $stmt = $pdo->prepare("SELECT q.id, q.title, q.body, q.ai_answer, q.created_at, u.username AS author FROM questions q LEFT JOIN users u ON q.user_id = u.id WHERE q.ai_generated = 1 AND q.ai_approved = 0 ORDER BY q.created_at DESC LIMIT 20");
-                $stmt->execute();
-                $pending = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            } catch (Exception $e) {
-                $pending = [];
-            }
+          // Fetch pending AI-generated answers awaiting approval
+          try {
+            $stmt = $pdo->prepare("SELECT q.id, q.title, q.body, q.ai_answer, q.created_at, u.username AS author FROM questions q LEFT JOIN users u ON q.user_id = u.id WHERE q.ai_generated = 1 AND q.ai_approved = 0 ORDER BY q.created_at DESC LIMIT 20");
+            $stmt->execute();
+            $pending = $stmt->fetchAll(PDO::FETCH_ASSOC);
+          } catch (Exception $e) {
+            $pending = [];
+          }
 
-            if (empty($pending)) {
-                echo '<div class="loading-placeholder"><p>No pending AI answers at the moment.</p></div>';
-            } else {
-                foreach ($pending as $p) {
-                    ?>
-                    <div class="question-card">
-                      <div class="question-meta">
-                        <div class="q-title"><?= htmlspecialchars($p['title']) ?></div>
-                        <div class="q-author">by <?= htmlspecialchars($p['author'] ?? 'Anonymous') ?> • <?= htmlspecialchars($p['created_at']) ?></div>
-                      </div>
-                      <div class="q-body"><?= nl2br(htmlspecialchars($p['body'])) ?></div>
-                      <div class="q-ai-answer">
-                        <h4>AI Draft Answer</h4>
-                        <div class="ai-answer-content"><?= nl2br(htmlspecialchars($p['ai_answer'])) ?></div>
-                      </div>
-                      <div class="q-actions">
-                        <form method="POST" action="/Medical_Q-A_MIU/public/approve-ai-answer" style="display:inline-block; margin-right:8px;">
-                          <input type="hidden" name="question_id" value="<?= intval($p['id']) ?>">
-                          <button name="action" value="approve" class="btn btn-small btn-primary">Approve</button>
-                        </form>
-                        <form method="POST" action="/Medical_Q-A_MIU/public/approve-ai-answer" style="display:inline-block;">
-                          <input type="hidden" name="question_id" value="<?= intval($p['id']) ?>">
-                          <button name="action" value="reject" class="btn btn-small btn-outline">Reject</button>
-                        </form>
-                      </div>
-                    </div>
-                    <?php
-                }
+          if (empty($pending)) {
+            echo '<div class="loading-placeholder"><p>No pending AI answers at the moment.</p></div>';
+          } else {
+            foreach ($pending as $p) {
+          ?>
+              <div class="question-card">
+                <div class="question-meta">
+                  <div class="q-title"><?= htmlspecialchars($p['title']) ?></div>
+                  <div class="q-author">by <?= htmlspecialchars($p['author'] ?? 'Anonymous') ?> • <?= htmlspecialchars($p['created_at']) ?></div>
+                </div>
+                <div class="q-body"><?= nl2br(htmlspecialchars($p['body'])) ?></div>
+                <div class="q-ai-answer">
+                  <h4>AI Draft Answer</h4>
+                  <div class="ai-answer-content"><?= nl2br(htmlspecialchars($p['ai_answer'])) ?></div>
+                </div>
+                <div class="q-actions">
+                  <form method="POST" action="/Medical_Q-A_MIU/public/approve-ai-answer" style="display:inline-block; margin-right:8px;">
+                    <input type="hidden" name="question_id" value="<?= intval($p['id']) ?>">
+                    <button name="action" value="approve" class="btn btn-small btn-primary">Approve</button>
+                  </form>
+                  <form method="POST" action="/Medical_Q-A_MIU/public/approve-ai-answer" style="display:inline-block;">
+                    <input type="hidden" name="question_id" value="<?= intval($p['id']) ?>">
+                    <button name="action" value="reject" class="btn btn-small btn-outline">Reject</button>
+                  </form>
+                </div>
+              </div>
+          <?php
             }
+          }
           ?>
         </div>
       </section>
@@ -740,7 +739,7 @@
   <!-- Chart.js Library -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
- 
+
 </body>
 
 </html>

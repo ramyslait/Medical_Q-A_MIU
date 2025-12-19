@@ -18,16 +18,16 @@
   <?php include '../app/partials/navbar.php'; ?>
 
   <?php
-    // Load recent questions and AI answers
-    require_once __DIR__ . '/../../config/db.php';
-    $pdo = Database::getConnection();
-    try {
-        $qstmt = $pdo->prepare("SELECT q.id, q.title, q.body, q.ai_answer, q.ai_approved, q.ai_generated, q.created_at, u.username FROM questions q LEFT JOIN users u ON q.user_id = u.id ORDER BY q.created_at DESC LIMIT 20");
-        $qstmt->execute();
-        $questions = $qstmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        $questions = [];
-    }
+  // Load recent questions and AI answers
+  require_once __DIR__ . '/../../config/db.php';
+  $pdo = Database::getConnection();
+  try {
+    $qstmt = $pdo->prepare("SELECT q.id, q.title, q.body, q.ai_answer, q.ai_approved, q.ai_generated, q.created_at, u.username FROM questions q LEFT JOIN users u ON q.user_id = u.id ORDER BY q.created_at DESC LIMIT 20");
+    $qstmt->execute();
+    $questions = $qstmt->fetchAll(PDO::FETCH_ASSOC);
+  } catch (Exception $e) {
+    $questions = [];
+  }
   ?>
 
   <!-- Main Content -->
@@ -94,13 +94,12 @@
         <div class="forum-main">
           <div class="discussions-list">
             <?php if (empty($questions)): ?>
-              <div class="loading-placeholder"><p>No discussions yet.</p></div>
+              <div class="loading-placeholder">
+                <p>No discussions yet.</p>
+              </div>
             <?php else: ?>
               <?php foreach ($questions as $q): ?>
                 <div class="discussion-item">
-                  <div class="discussion-avatar">
-                    <img src="https://via.placeholder.com/50/2563eb/ffffff?text=U" alt="User Avatar" />
-                  </div>
                   <div class="discussion-content">
                     <div class="discussion-header">
                       <h3 class="discussion-title">
@@ -165,17 +164,17 @@
   <!-- Scripts -->
   <script src="js/main.js"></script>
   <script src="js/controllers/forumController.js"></script>
-  <?php 
+  <?php
   if (session_status() === PHP_SESSION_NONE) {
     session_start();
   }
   $currentUser = $_SESSION['user'] ?? null;
   ?>
   <script>
-    // Pass user role to JavaScript
+    // Pass user role to J  Script
     window.currentUserRole = <?php echo json_encode($currentUser['role'] ?? null); ?>;
     window.currentUserId = <?php echo json_encode($currentUser['id'] ?? null); ?>;
-    
+
     function startNewDiscussion() {
       if (!MediQA.isLoggedIn) {
         MediQA.showNotification(
