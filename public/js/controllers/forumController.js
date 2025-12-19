@@ -198,9 +198,6 @@ class ForumView {
 
     return `
             <div class="discussion-item">
-                <div class="discussion-avatar">
-                    <img src="${discussion.authorAvatar}" alt="User Avatar">
-                </div>
                 <div class="discussion-content">
                     <div class="discussion-header">
                         <h3 class="discussion-title">
