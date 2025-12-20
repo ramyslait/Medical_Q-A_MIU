@@ -932,9 +932,7 @@ class DashboardView {
                 <tr>
                     <td>
                         <div class="user-cell">
-                            <img src="${
-                              user.avatar
-                            }" alt="Avatar" class="user-avatar-small">
+                          
                             <div>
                                 <div class="user-name">${user.name}</div>
                                 <div class="user-email">${user.email}</div>
@@ -977,9 +975,9 @@ class DashboardView {
                     <div class="question-header">
                         <h4>${question.title}</h4>
                         <span class="badge badge-${
-                          question.status === "pending" ? "warning" : 
-                          question.status === "answered" ? "success" : "secondary"
-                        }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
+                          question.doctor_approval_status === "not approved" ? "warning" : 
+                          question.doctor_approval_status === "approved" ? "success" : "secondary"
+                        }">${question.doctor_approval_status.charAt(0).toUpperCase() + question.doctor_approval_status.slice(1)}</span>
                     </div>
                     <div class="question-meta">
                         <span class="question-category">${
@@ -992,16 +990,10 @@ class DashboardView {
                         <small>Asked by: ${question.user_name || 'Anonymous'}</small>
                     </div>
                     <div class="question-actions">
-                        <button class="btn btn-small btn-primary" onclick="assignQuestion('${
-                          question.id
-                        }')">Assign to Provider</button>
                         <button class="btn btn-small btn-outline" onclick="viewQuestion('${
                           question.id
                         }')">View Details</button>
-                        ${question.status === 'answered' ? 
-                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + question.id + '\')">Mark Resolved</button>' : 
-                          ''
-                        }
+                       
                     </div>
                 </div>
             `
@@ -1057,9 +1049,9 @@ class DashboardView {
                     <div class="answer-header">
                         <h4>${this.escapeHtml(answer.title)}</h4>
                         <span class="badge badge-${
-                          answer.status === "pending" ? "warning" : 
-                          answer.status === "answered" ? "success" : "secondary"
-                        }">${answer.status.charAt(0).toUpperCase() + answer.status.slice(1)}</span>
+                          answer.doctor_approval_status === "pending" ? "warning" : 
+                          answer.doctor_approval_status === "approved" ? "success" : "secondary"
+                        }">${answer.doctor_approval_status.charAt(0).toUpperCase() + answer.doctor_approval_status.slice(1)}</span>
                     </div>
                     <div class="answer-meta">
                         <span class="answer-category badge badge-info">${
@@ -1082,10 +1074,7 @@ class DashboardView {
                         <button class="btn btn-small btn-outline" onclick="viewQuestion('${
                           answer.id
                         }')">View Full Details</button>
-                        ${answer.status === 'answered' ? 
-                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + answer.id + '\')">Mark Resolved</button>' : 
-                          ''
-                        }
+                        
                     </div>
                 </div>
             `
@@ -1155,10 +1144,8 @@ class DashboardView {
                         <button class="btn btn-small btn-outline" onclick="viewQuestion('${
                           question.id
                         }')">View Details</button>
-                        ${question.ai_answer ? 
-                          '<button class="btn btn-small btn-success" onclick="markResolved(\'' + question.id + '\')">Mark Resolved</button>' : 
-                          '<button class="btn btn-small btn-primary" onclick="assignQuestion(\'' + question.id + '\')">Assign</button>'
-                        }
+                        
+                        
                     </div>
                 </div>
             `
@@ -1238,12 +1225,7 @@ class DashboardView {
                 </div>
                 <div class="modal-footer" style="padding: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.5rem; justify-content: flex-end;">
                     <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
-                    ${question.status !== 'answered' ? `
-                    <button class="btn btn-primary" onclick="assignQuestion('${question.id}'); this.closest('.modal-overlay').remove();">Assign to Provider</button>
-                    ` : ''}
-                    ${question.status === 'answered' ? `
-                    <button class="btn btn-success" onclick="markResolved('${question.id}'); this.closest('.modal-overlay').remove();">Mark Resolved</button>
-                    ` : ''}
+                  
                 </div>
             </div>
         `;

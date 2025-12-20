@@ -74,21 +74,7 @@
             </div>
           </div>
 
-          <div class="stats-card">
-            <h3>Forum Statistics</h3>
-            <div class="stat-item">
-              <span class="stat-number">156</span>
-              <span class="stat-label">Active Discussions</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number">2,847</span>
-              <span class="stat-label">Total Posts</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number">1,234</span>
-              <span class="stat-label">Community Members</span>
-            </div>
-          </div>
+         
         </div>
 
         <div class="forum-main">
