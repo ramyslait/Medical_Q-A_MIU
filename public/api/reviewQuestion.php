@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../utils/mailer.php'; // ADD THIS LINE
 
 header('Content-Type: application/json');
 
@@ -18,6 +19,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['role']) || $_SESSION[
 
 // Get doctor ID from session
 $doctorId = $_SESSION['user']['id'] ?? null;
+$doctorName = $_SESSION['user']['name'] ?? 'Doctor'; // ADD THIS
 if (!$doctorId) {
     echo json_encode([
         'success' => false,
@@ -50,6 +52,27 @@ try {
         exit;
     }
 
+    // GET QUESTION DETAILS FOR EMAIL - ADD THIS SECTION
+    $getQuestionStmt = $conn->prepare("
+        SELECT q.*, u.email, u.name as user_name 
+        FROM questions q 
+        LEFT JOIN users u ON q.user_id = u.id 
+        WHERE q.id = :question_id
+    ");
+    $getQuestionStmt->execute([':question_id' => $questionId]);
+    $question = $getQuestionStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$question) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Question not found'
+        ]);
+        exit;
+    }
+
+    $emailSent = false;
+    $emailError = '';
+
     if ($action === 'approve') {
         $stmt = $conn->prepare("
             UPDATE questions 
@@ -66,6 +89,24 @@ try {
             ':doctor_comment' => $doctorComment ?: null,
             ':question_id' => $questionId
         ]);
+
+        // SEND APPROVAL EMAIL - ADD THIS
+        if (!empty($question['email'])) {
+            $aiAnswer = $question['ai_answer'] ?? "Your question has been reviewed and approved by our medical team.";
+            
+            $emailSent = sendDoctorApprovalEmail(
+                $question['email'],
+                $question['user_name'],
+                $question['body'],
+                $aiAnswer,
+                $doctorName,
+                $doctorComment
+            );
+            
+            if (!$emailSent) {
+                $emailError = 'Approval email failed to send';
+            }
+        }
 
     } elseif ($action === 'disapprove') {
         if (empty($doctorAnswer)) {
@@ -92,6 +133,34 @@ try {
             ':question_id' => $questionId
         ]);
 
+        // SEND DISAPPROVAL EMAIL - ADD THIS
+        if (!empty($question['email'])) {
+            // Check if disapproval function exists, otherwise use approval function
+            if (function_exists('sendDoctorDisapprovalEmail')) {
+                $emailSent = sendDoctorDisapprovalEmail(
+                    $question['email'],
+                    $question['user_name'],
+                    $question['body'],
+                    $doctorAnswer,
+                    $doctorName
+                );
+            } else {
+                // Fallback to approval email with custom message
+                $emailSent = sendDoctorApprovalEmail(
+                    $question['email'],
+                    $question['user_name'],
+                    $question['body'],
+                    $doctorAnswer,
+                    $doctorName,
+                    "AI answer was not approved. Doctor has provided this answer instead."
+                );
+            }
+            
+            if (!$emailSent) {
+                $emailError = 'Disapproval email failed to send';
+            }
+        }
+
     } else {
         echo json_encode([
             'success' => false,
@@ -100,10 +169,24 @@ try {
         exit;
     }
 
-    echo json_encode([
+    // UPDATE RESPONSE WITH EMAIL STATUS - ADD THIS
+    $response = [
         'success' => true,
         'message' => 'Question reviewed successfully'
-    ]);
+    ];
+    
+    if ($emailSent) {
+        $response['email_sent'] = true;
+        $response['email_message'] = 'Email sent to user';
+    } elseif ($emailError) {
+        $response['email_sent'] = false;
+        $response['email_error'] = $emailError;
+    } elseif (empty($question['email'])) {
+        $response['email_sent'] = false;
+        $response['email_error'] = 'No user email found';
+    }
+    
+    echo json_encode($response);
 
 } catch (Exception $e) {
     echo json_encode([
@@ -112,4 +195,3 @@ try {
     ]);
 }
 ?>
-
