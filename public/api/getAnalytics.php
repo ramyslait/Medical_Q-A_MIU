@@ -26,7 +26,7 @@ try {
         $questionVolume[] = (int)$result['count'];
     }
 
-    // Get answers provided over last 7 days
+    // Get answers provided over last 7 days (AI answers)
     $answersProvided = [];
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-$i days"));
@@ -55,13 +55,20 @@ try {
         ];
     }
 
-    // Get status distribution
+    // UPDATED: Get doctor approval status distribution (instead of regular status)
     $stmt = $conn->query("
         SELECT 
-            status,
+            CASE 
+                WHEN doctor_approval_status IS NULL OR doctor_approval_status = '' THEN 'pending'
+                ELSE doctor_approval_status 
+            END as status,
             COUNT(*) as count
         FROM questions
-        GROUP BY status
+        GROUP BY 
+            CASE 
+                WHEN doctor_approval_status IS NULL OR doctor_approval_status = '' THEN 'pending'
+                ELSE doctor_approval_status 
+            END
     ");
     $statusData = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $statusDistribution = [];
@@ -98,10 +105,16 @@ try {
         ];
     }
 
-    // Calculate average response time (for questions with answers, assume immediate response for now)
-    // Since questions are answered immediately when created, response time is near 0
-    // In a real system, you'd track when the answer was generated
-    $avgResponseTime = 0; // Questions are answered immediately, so response time is minimal
+    // UPDATED: Calculate average doctor review response time
+    $stmt = $conn->query("
+        SELECT 
+            AVG(TIMESTAMPDIFF(MINUTE, created_at, doctor_reviewed_at)) as avg_time
+        FROM questions 
+        WHERE doctor_reviewed_at IS NOT NULL 
+        AND doctor_approval_status IN ('approved', 'not_approved')
+    ");
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $avgResponseTime = $result['avg_time'] ? round((float)$result['avg_time']) : 0;
 
     // Get top categories
     $stmt = $conn->query("
@@ -116,6 +129,21 @@ try {
     ");
     $topCategories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // NEW: Calculate doctor approval rate/accuracy
+    $stmt = $conn->query("
+        SELECT 
+            SUM(CASE WHEN doctor_approval_status = 'approved' THEN 1 ELSE 0 END) as approved,
+            SUM(CASE WHEN doctor_approval_status IN ('approved', 'not_approved') THEN 1 ELSE 0 END) as reviewed,
+            COUNT(*) as total
+        FROM questions
+    ");
+    $approvalData = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $approvalRate = 0;
+    if ($approvalData['reviewed'] > 0) {
+        $approvalRate = round(($approvalData['approved'] / $approvalData['reviewed']) * 100, 1);
+    }
+
     echo json_encode([
         'success' => true,
         'analytics' => [
@@ -123,11 +151,18 @@ try {
             'questionVolume' => $questionVolume,
             'answersProvided' => $answersProvided,
             'categoryDistribution' => $categoryDistribution,
-            'statusDistribution' => $statusDistribution,
+            'statusDistribution' => $statusDistribution, // Now shows doctor_approval_status
             'monthlyUsers' => $monthlyUsers,
             'monthlyQuestions' => $monthlyQuestions,
-            'avgResponseTime' => $avgResponseTime,
-            'topCategories' => $topCategories
+            'avgResponseTime' => $avgResponseTime, // Now shows doctor review time
+            'topCategories' => $topCategories,
+            'approvalRate' => $approvalRate, // New: Doctor approval rate
+            'approvalStats' => [ // New: Additional approval stats
+                'approved' => (int)$approvalData['approved'],
+                'reviewed' => (int)$approvalData['reviewed'],
+                'total' => (int)$approvalData['total'],
+                'pending_review' => (int)$approvalData['total'] - (int)$approvalData['reviewed']
+            ]
         ]
     ]);
 } catch (Exception $e) {
@@ -137,4 +172,3 @@ try {
     ]);
 }
 ?>
-

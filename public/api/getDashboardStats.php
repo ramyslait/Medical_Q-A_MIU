@@ -6,16 +6,21 @@ header('Content-Type: application/json');
 try {
     $conn = Database::getConnection();
 
-    // Get total answers count (questions with ai_answer)
-    $stmt = $conn->query("SELECT COUNT(*) as total FROM questions WHERE ai_answer IS NOT NULL AND ai_answer != ''");
-    $answersCount = $stmt->fetch()['total'];
+    // Get approved questions count
+    $stmt = $conn->query("SELECT COUNT(*) as total FROM questions WHERE doctor_approval_status = 'approved'");
+    $approvedCount = $stmt->fetch()['total'];
+
+    // Get total reviewed questions count (where status is not pending)
+    $stmt = $conn->query("SELECT COUNT(*) as total FROM questions WHERE doctor_approval_status != 'pending' AND doctor_approval_status IS NOT NULL");
+    $reviewedQuestions = $stmt->fetch()['total'];
 
     // Get total questions count
     $stmt = $conn->query("SELECT COUNT(*) as total FROM questions");
     $totalQuestions = $stmt->fetch()['total'];
 
-    // Calculate accuracy rate (answered questions / total questions * 100)
-    $accuracyRate = $totalQuestions > 0 ? round(($answersCount / $totalQuestions) * 100, 1) : 0;
+    // Calculate accuracy rate (approved questions / reviewed questions * 100)
+    // Only calculate if there are reviewed questions
+    $accuracyRate = $reviewedQuestions > 0 ? round(($approvedCount / $reviewedQuestions) * 100, 1) : 0;
 
     // Get recent activity (last 5 questions and last 3 users)
     $stmt = $conn->query("
@@ -25,7 +30,8 @@ try {
             q.title as text,
             q.created_at,
             u.name as user_name,
-            CONCAT('Question: ', q.title) as description
+            q.doctor_approval_status,
+            CONCAT('Question: ', q.title, ' (', COALESCE(q.doctor_approval_status, 'pending'), ')') as description
         FROM questions q
         LEFT JOIN users u ON q.user_id = u.id
         ORDER BY q.created_at DESC
@@ -60,21 +66,32 @@ try {
         $icon = $item['type'] === 'question' ? 'fas fa-question' : 'fas fa-user-plus';
         $text = $item['type'] === 'question' ? 'New question submitted' : 'New user registered';
         
+        // Add approval status to question description
+        if ($item['type'] === 'question') {
+            $status = isset($item['doctor_approval_status']) ? $item['doctor_approval_status'] : 'pending';
+            $statusText = ucfirst($status);
+            $description = "Question: " . $item['text'] . " ($statusText)";
+        } else {
+            $description = $item['description'];
+        }
+        
         return [
             'type' => $item['type'],
             'text' => $text,
             'meta' => $item['user_name'] . ' • ' . $timeAgo,
             'icon' => $icon,
-            'description' => $item['description']
+            'description' => $description
         ];
     }, $recentActivity);
 
     echo json_encode([
         'success' => true,
         'stats' => [
-            'answersProvided' => (int)$answersCount,
+            'answersProvided' => (int)$approvedCount,
             'accuracyRate' => $accuracyRate,
-            'totalQuestions' => (int)$totalQuestions
+            'totalQuestions' => (int)$totalQuestions,
+            'reviewedQuestions' => (int)$reviewedQuestions, // Optional: include for debugging
+            'approvalRate' => $reviewedQuestions > 0 ? round(($approvedCount / $reviewedQuestions) * 100, 1) . '%' : 'N/A' // Optional: formatted rate
         ],
         'recentActivity' => $formattedActivity
     ]);
@@ -96,4 +113,3 @@ function timeAgo($datetime) {
     return floor($time/31536000) . ' years ago';
 }
 ?>
-
