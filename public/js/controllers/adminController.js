@@ -16,6 +16,8 @@ class AdminController {
     this.initializeNavigation();
     this.loadDashboardData();
     this.bindEvents();
+    this.dashboardView.initUserActivityChart();
+
   }
 
   checkAdminAccess() {
@@ -120,7 +122,7 @@ class AdminController {
         const accuracyChangeElement = document.getElementById('accuracyChange');
         if (accuracyChangeElement) {
           accuracyChangeElement.textContent = data.stats.accuracyRate > 0 ? 
-            `${data.stats.accuracyRate}% answered` : 'No data';
+            `${data.stats.accuracyRate}% approved` : 'No data';
         }
 
         // Update recent activity
@@ -273,42 +275,59 @@ async loadUsersData() {
     }
   }
 
-  async loadForumData() {
-    try {
-      const forumData = await this.adminModel.getForumData();
-      this.dashboardView.updateForumStats(forumData.stats);
-      this.dashboardView.updateForumGrid(forumData.questions);
-      
-      // Bind filter events
-      const statusFilter = document.getElementById('forumStatusFilter');
-      const categoryFilter = document.getElementById('forumCategoryFilter');
-      const sortFilter = document.getElementById('forumSortFilter');
-      
-      if (statusFilter) {
-        statusFilter.addEventListener('change', () => this.filterForum());
-      }
-      if (categoryFilter) {
-        categoryFilter.addEventListener('change', () => this.filterForum());
-      }
-      if (sortFilter) {
-        sortFilter.addEventListener('change', () => this.filterForum());
-      }
-    } catch (error) {
-      MediQA.showNotification("Failed to load forum data", "error");
+async loadForumData() {
+  try {
+    console.log('🔄 [loadForumData] Starting to load forum data...');
+    const forumData = await this.adminModel.getForumData();
+    console.log('📦 [loadForumData] Forum data received:', forumData);
+    console.log('📊 [loadForumData] Stats object:', forumData.stats);
+    
+    // Specifically check what values are in stats
+    console.log('🔍 [loadForumData] Stats breakdown:');
+    console.log('   - total:', forumData.stats.total);
+    console.log('   - answered (approved):', forumData.stats.answered);
+    console.log('   - pending:', forumData.stats.pending);
+    console.log('   - not_approved:', forumData.stats.not_approved);
+    console.log('   - categories:', forumData.stats.categories);
+    
+    this.dashboardView.updateForumStats(forumData.stats);
+    this.dashboardView.updateForumGrid(forumData.questions);
+    
+    // Bind filter events
+    const statusFilter = document.getElementById('forumStatusFilter');
+    const categoryFilter = document.getElementById('forumCategoryFilter');
+    const sortFilter = document.getElementById('forumSortFilter');
+    
+    if (statusFilter) {
+      console.log('✅ [loadForumData] Status filter element found');
+      statusFilter.addEventListener('change', () => this.filterForum());
     }
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', () => this.filterForum());
+    }
+    if (sortFilter) {
+      sortFilter.addEventListener('change', () => this.filterForum());
+    }
+  } catch (error) {
+    console.error('❌ [loadForumData] Failed to load forum data:', error);
+    MediQA.showNotification("Failed to load forum data", "error");
   }
+}
 
-  async filterForum() {
-    try {
-      const statusFilter = document.getElementById('forumStatusFilter')?.value || '';
-      const categoryFilter = document.getElementById('forumCategoryFilter')?.value || '';
-      const sortFilter = document.getElementById('forumSortFilter')?.value || 'recent';
-      const forumData = await this.adminModel.getForumData(statusFilter, categoryFilter, sortFilter);
-      this.dashboardView.updateForumGrid(forumData.questions);
-    } catch (error) {
-      console.error('Error filtering forum:', error);
-    }
+async filterForum() {
+  try {
+    // IMPORTANT: Now filtering by doctor_approval_status, not status
+    const statusFilter = document.getElementById('forumStatusFilter')?.value || '';
+    const categoryFilter = document.getElementById('forumCategoryFilter')?.value || '';
+    const sortFilter = document.getElementById('forumSortFilter')?.value || 'recent';
+    
+    // Update dropdown options to show doctor_approval_status values
+    const forumData = await this.adminModel.getForumData(statusFilter, categoryFilter, sortFilter);
+    this.dashboardView.updateForumGrid(forumData.questions);
+  } catch (error) {
+    console.error('Error filtering forum:', error);
   }
+}
 
   async loadQuestionsCount() {
     try {
@@ -375,21 +394,22 @@ async loadUsersData() {
     }
   }
 
-  async searchForum(query) {
-    try {
-      const forumData = await this.adminModel.getForumData();
-      const filtered = forumData.questions.filter(
-        (question) =>
-          question.title.toLowerCase().includes(query.toLowerCase()) ||
-          question.body.toLowerCase().includes(query.toLowerCase()) ||
-          (question.user_name && question.user_name.toLowerCase().includes(query.toLowerCase())) ||
-          (question.category && question.category.toLowerCase().includes(query.toLowerCase()))
-      );
-      this.dashboardView.updateForumGrid(filtered);
-    } catch (error) {
-      MediQA.showNotification("Search failed", "error");
-    }
+async searchForum(query) {
+  try {
+    const forumData = await this.adminModel.getForumData();
+    const filtered = forumData.questions.filter(
+      (question) =>
+        question.title.toLowerCase().includes(query.toLowerCase()) ||
+        question.body.toLowerCase().includes(query.toLowerCase()) ||
+        (question.user_name && question.user_name.toLowerCase().includes(query.toLowerCase())) ||
+        (question.category && question.category.toLowerCase().includes(query.toLowerCase())) ||
+        (question.doctor_approval_status && question.doctor_approval_status.toLowerCase().includes(query.toLowerCase()))
+    );
+    this.dashboardView.updateForumGrid(filtered);
+  } catch (error) {
+    MediQA.showNotification("Search failed", "error");
   }
+}
 
   async searchUsers(query) {
     try {
@@ -666,7 +686,7 @@ class AdminModel {
     try {
       let url = 'api/getQuestions.php';
       const params = new URLSearchParams();
-      if (statusFilter) params.append('status', statusFilter);
+      if (statusFilter) params.append('doctor_approval_status', statusFilter);
       if (categoryFilter) params.append('category', categoryFilter);
       if (params.toString()) url += '?' + params.toString();
       
@@ -686,52 +706,65 @@ class AdminModel {
     }
   }
 
-  async getForumData(statusFilter = '', categoryFilter = '', sortBy = 'recent') {
-    try {
-      let url = 'api/getQuestions.php';
-      const params = new URLSearchParams();
-      if (statusFilter) params.append('status', statusFilter);
-      if (categoryFilter) params.append('category', categoryFilter);
-      if (params.toString()) url += '?' + params.toString();
-      
-      const response = await fetch(url, { credentials: 'same-origin' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        let questions = data.questions;
-        
-        // Sort questions
-        switch (sortBy) {
-          case 'oldest':
-            questions.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-            break;
-          case 'category':
-            questions.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
-            break;
-          case 'recent':
-          default:
-            questions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            break;
-        }
-        
-        // Get forum statistics
-        const stats = {
-          total: questions.length,
-          answered: questions.filter(q => q.status === 'answered').length,
-          pending: questions.filter(q => q.status === 'pending').length,
-          categories: new Set(questions.map(q => q.category).filter(Boolean)).size
-        };
-        
-        return { questions, stats };
-      } else {
-        throw new Error(data.error || 'Failed to fetch forum data');
-      }
-    } catch (error) {
-      console.error('Error fetching forum data:', error);
-      throw error;
+async getForumData(statusFilter = '', categoryFilter = '', sortBy = 'recent') {
+  try {
+    let url = 'api/getQuestions.php';
+    const params = new URLSearchParams();
+    
+    // Filter by doctor_approval_status, not status
+    if (statusFilter && statusFilter !== '' && statusFilter !== 'all') {
+      params.append('doctor_approval_status', statusFilter);
     }
+    
+    if (categoryFilter && categoryFilter !== '' && categoryFilter !== 'all') {
+      params.append('category', categoryFilter);
+    }
+    
+    if (params.toString()) url += '?' + params.toString();
+    
+    const response = await fetch(url, { credentials: 'same-origin' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      let questions = data.questions;
+      
+      // Sort questions
+      switch (sortBy) {
+        case 'oldest':
+          questions.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+          break;
+        case 'category':
+          questions.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+          break;
+        case 'status':
+          // Sort by doctor_approval_status
+          questions.sort((a, b) => (a.doctor_approval_status || '').localeCompare(b.doctor_approval_status || ''));
+          break;
+        case 'recent':
+        default:
+          questions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          break;
+      }
+      
+      // Count by doctor_approval_status, not status
+      const stats = {
+        total: questions.length,
+        pending: questions.filter(q => !q.doctor_approval_status || q.doctor_approval_status === 'pending').length,
+        answered: questions.filter(q => q.doctor_approval_status === 'approved').length,
+        not_approved: questions.filter(q => q.doctor_approval_status === 'not_approved').length,
+        categories: new Set(questions.map(q => q.category).filter(Boolean)).size
+      };
+      
+      return { questions, stats };
+    } else {
+      throw new Error(data.error || 'Failed to fetch forum data');
+    }
+  } catch (error) {
+    console.error('Error fetching forum data:', error);
+    throw error;
   }
+}
 
   async getRecentActivity() {
     await this.simulateDelay();
@@ -923,47 +956,60 @@ class DashboardView {
     }
   }
 
-  updateUsersTable(users) {
-    const tableBody = document.querySelector("#users-section .table tbody");
-    if (tableBody) {
-      tableBody.innerHTML = users
-        .map(
-          (user) => `
-                <tr>
-                    <td>
-                        <div class="user-cell">
-                          
-                            <div>
-                                <div class="user-name">${user.name}</div>
-                                <div class="user-email">${user.email}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span class="badge badge-${
-                      user.role === "admin"
-                        ? "info"
-                        : user.role === "provider"
-                        ? "warning"
-                        : "success"
-                    }">${user.role}</span></td>
-                    <td><span class="badge badge-${
-                      user.status === "active" ? "success" : "danger"
-                    }">${user.status}</span></td>
-                    <td>${this.formatDate(user.joinDate)}</td>
-                    <td>
-                        <button class="btn btn-small btn-outline" onclick="editUser('${
-                          user.id
-                        }')">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="suspendUser('${
-                          user.id
-                        }')">Suspend</button>
-                    </td>
-                </tr>
-            `
-        )
-        .join("");
-    }
+updateUsersTable(users) {
+  const tableBody = document.querySelector("#users-section .table tbody");
+  if (tableBody) {
+    tableBody.innerHTML = users
+      .map(
+        (user) => `
+          <tr data-user-id="${user.id}">
+            <td>
+              <div class="user-cell">
+                <div>
+                  <div class="user-name">${user.name}</div>
+                  <div class="user-email">${user.email}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-${
+                user.role === "admin"
+                  ? "info"
+                  : user.role === "doctor"
+                  ? "warning"
+                  : "success"
+              }">
+                ${user.role}
+              </span>
+            </td>
+            <td>
+              <span class="badge badge-${
+                user.status === "active" || user.status === "verified" ? "success" : "danger"
+              }">
+                ${user.status === "active" || user.status === "verified" ? "Active" : "Suspended"}
+              </span>
+            </td>
+            <td>${this.formatDate(user.joinDate)}</td>
+            <td>
+              <button class="btn btn-small btn-outline" onclick="editUser('${user.id}')">
+                Edit
+              </button>
+              ${
+                user.status === "active" || user.status === "verified"
+                  ? `<button class="btn btn-small btn-danger" onclick="suspendUser('${user.id}', '${user.name}')">
+                      Suspend
+                    </button>`
+                  : `<button class="btn btn-small btn-success" onclick="activateUser('${user.id}', '${user.name}')">
+                      Activate
+                    </button>`
+              }
+            </td>
+          </tr>
+        `
+      )
+      .join("");
   }
+}
 
   updateQuestionsGrid(questions) {
     const questionsGrid = document.querySelector(".questions-grid");
@@ -975,9 +1021,10 @@ class DashboardView {
                     <div class="question-header">
                         <h4>${question.title}</h4>
                         <span class="badge badge-${
-                          question.doctor_approval_status === "not approved" ? "warning" : 
-                          question.doctor_approval_status === "approved" ? "success" : "secondary"
-                        }">${question.doctor_approval_status.charAt(0).toUpperCase() + question.doctor_approval_status.slice(1)}</span>
+                        !question.doctor_approval_status || question.doctor_approval_status === "pending" ? "warning" : 
+                        question.doctor_approval_status === "approved" ? "success" : 
+                        question.doctor_approval_status === "not_approved" ? "danger" : "secondary"
+                      }">${(question.doctor_approval_status || 'pending').charAt(0).toUpperCase() + (question.doctor_approval_status || 'pending').slice(1)}</span>
                     </div>
                     <div class="question-meta">
                         <span class="question-category">${
@@ -1083,76 +1130,93 @@ class DashboardView {
     }
   }
 
-  updateForumStats(stats) {
-    const totalElement = document.getElementById('forumTotalQuestions');
-    const answeredElement = document.getElementById('forumAnsweredQuestions');
-    const pendingElement = document.getElementById('forumPendingQuestions');
-    const categoriesElement = document.getElementById('forumCategories');
+updateForumStats(stats) {
+  console.log('📊 updateForumStats called with:', stats);
+  
+  const totalElement = document.getElementById('forumTotalQuestions');
+  const answeredElement = document.getElementById('forumAnsweredQuestions');
+  const pendingElement = document.getElementById('forumPendingQuestions');
+  const categoriesElement = document.getElementById('forumCategories');
 
-    if (totalElement) totalElement.textContent = stats.total.toLocaleString();
-    if (answeredElement) answeredElement.textContent = stats.answered.toLocaleString();
-    if (pendingElement) pendingElement.textContent = stats.pending.toLocaleString();
-    if (categoriesElement) categoriesElement.textContent = stats.categories.toLocaleString();
+  if (totalElement) {
+    totalElement.textContent = (stats.total || 0).toLocaleString();
   }
-
-  updateForumGrid(questions) {
-    const forumGrid = document.querySelector(".forum-management-grid");
-    if (forumGrid) {
-      if (questions.length === 0) {
-        forumGrid.innerHTML = `
-          <div class="empty-state">
-            <i class="fas fa-comments" style="font-size: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
-            <p>No forum discussions found</p>
-          </div>
-        `;
-        return;
-      }
-
-      forumGrid.innerHTML = questions
-        .map(
-          (question) => `
-                <div class="forum-discussion-card">
-                    <div class="forum-discussion-header">
-                        <div class="forum-discussion-title-section">
-                            <h4>${this.escapeHtml(question.title)}</h4>
-                            <div class="forum-discussion-meta">
-                                <span class="badge badge-${
-                                  question.status === "pending" ? "warning" : 
-                                  question.status === "answered" ? "success" : "secondary"
-                                }">${question.status.charAt(0).toUpperCase() + question.status.slice(1)}</span>
-                                <span class="badge badge-info">${this.escapeHtml(question.category || 'N/A')}</span>
-                                <span class="forum-date">${question.time_ago}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="forum-discussion-content">
-                        <p>${this.escapeHtml(question.body.substring(0, 150))}${question.body.length > 150 ? '...' : ''}</p>
-                    </div>
-                    <div class="forum-discussion-info">
-                        <div class="forum-user-info">
-                            <i class="fas fa-user"></i>
-                            <span>${this.escapeHtml(question.user_name || 'Anonymous')}</span>
-                        </div>
-                        <div class="forum-answer-status">
-                            ${question.ai_answer ? 
-                              '<i class="fas fa-check-circle" style="color: #10b981;"></i> <span>Answered</span>' : 
-                              '<i class="fas fa-clock" style="color: #f59e0b;"></i> <span>Pending</span>'
-                            }
-                        </div>
-                    </div>
-                    <div class="forum-discussion-actions">
-                        <button class="btn btn-small btn-outline" onclick="viewQuestion('${
-                          question.id
-                        }')">View Details</button>
-                        
-                        
-                    </div>
-                </div>
-            `
-        )
-        .join("");
+  
+  if (answeredElement) {
+    answeredElement.textContent = (stats.answered || 0).toLocaleString();
+  }
+  
+  if (pendingElement) {
+    pendingElement.textContent = (stats.pending || 0).toLocaleString();
+    
+    // Highlight if pending
+    if ((stats.pending || 0) > 0) {
+      pendingElement.style.color = '#f59e0b';
+      pendingElement.style.fontWeight = 'bold';
+    } else {
+      pendingElement.style.color = '';
+      pendingElement.style.fontWeight = '';
     }
   }
+  
+  if (categoriesElement) {
+    categoriesElement.textContent = (stats.categories || 0).toLocaleString();
+  }
+}
+updateForumGrid(questions) {
+  const forumGrid = document.querySelector(".forum-management-grid");
+  if (forumGrid) {
+    if (questions.length === 0) {
+      forumGrid.innerHTML = `<div class="empty-state">No forum discussions found</div>`;
+      return;
+    }
+
+    forumGrid.innerHTML = questions
+      .map(
+        (question) => `
+              <div class="forum-discussion-card">
+                  <div class="forum-discussion-header">
+                      <div class="forum-discussion-title-section">
+                          <h4>${this.escapeHtml(question.title)}</h4>
+                          <div class="forum-discussion-meta">
+                              <!-- Show doctor_approval_status instead of status -->
+                              <span class="badge badge-${
+                                question.doctor_approval_status === "pending" ? "warning" : 
+                                question.doctor_approval_status === "approved" ? "success" : "secondary"
+                              }">${(question.doctor_approval_status || 'pending').charAt(0).toUpperCase() + (question.doctor_approval_status || 'pending').slice(1)}</span>
+                              <span class="badge badge-info">${this.escapeHtml(question.category || 'N/A')}</span>
+                              <span class="forum-date">${question.time_ago}</span>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="forum-discussion-content">
+                      <p>${this.escapeHtml(question.body.substring(0, 150))}${question.body.length > 150 ? '...' : ''}</p>
+                  </div>
+                  <div class="forum-discussion-info">
+                      <div class="forum-user-info">
+                          <i class="fas fa-user"></i>
+                          <span>${this.escapeHtml(question.user_name || 'Anonymous')}</span>
+                      </div>
+                      <div class="forum-answer-status">
+                          ${question.doctor_approval_status === 'approved' ? 
+                            '<i class="fas fa-check-circle" style="color: #10b981;"></i> <span>Approved</span>' : 
+                            question.doctor_approval_status === 'not_approved' ?
+                            '<i class="fas fa-times-circle" style="color: #ef4444;"></i> <span>Rejected</span>' :
+                            '<i class="fas fa-clock" style="color: #f59e0b;"></i> <span>Pending Review</span>'
+                          }
+                      </div>
+                  </div>
+                  <div class="forum-discussion-actions">
+                      <button class="btn btn-small btn-outline" onclick="viewQuestion('${
+                        question.id
+                      }')">Review</button>
+                  </div>
+              </div>
+          `
+      )
+      .join("");
+  }
+}
 
   showQuestionDetailsModal(question) {
     // Remove any existing modals
@@ -1298,36 +1362,54 @@ class DashboardView {
   initializeCharts() {
     // Charts will be initialized when analytics data is loaded
   }
+updateAnalytics(analytics) {
+  if (!analytics) return;
 
-  updateAnalytics(analytics) {
-    if (!analytics) return;
-
-    // Update key metrics
-    const avgResponseTimeEl = document.getElementById('avgResponseTime');
-    if (avgResponseTimeEl) {
-      avgResponseTimeEl.textContent = analytics.avgResponseTime 
-        ? `${analytics.avgResponseTime} minutes` 
-        : 'N/A';
-    }
-
-    const topCategoryEl = document.getElementById('topCategory');
-    if (topCategoryEl && analytics.topCategories && analytics.topCategories.length > 0) {
-      topCategoryEl.textContent = analytics.topCategories[0].category || 'N/A';
-    }
-
-    const totalCategoriesEl = document.getElementById('totalCategories');
-    if (totalCategoriesEl && analytics.categoryDistribution) {
-      totalCategoriesEl.textContent = analytics.categoryDistribution.length;
-    }
-
-    // Initialize charts
-    this.initUserGrowthChart(analytics.userGrowth);
-    this.initQuestionVolumeChart(analytics.questionVolume, analytics.answersProvided);
-    this.initCategoryDistributionChart(analytics.categoryDistribution);
-    this.initStatusDistributionChart(analytics.statusDistribution);
-    this.initMonthlyUsersChart(analytics.monthlyUsers);
-    this.initMonthlyQuestionsChart(analytics.monthlyQuestions);
+  // Update key metrics
+  const avgResponseTimeEl = document.getElementById('avgResponseTime');
+  if (avgResponseTimeEl) {
+    avgResponseTimeEl.textContent = analytics.avgResponseTime 
+      ? `${analytics.avgResponseTime} minutes` 
+      : 'N/A';
   }
+
+  const topCategoryEl = document.getElementById('topCategory');
+  if (topCategoryEl && analytics.topCategories && analytics.topCategories.length > 0) {
+    topCategoryEl.textContent = analytics.topCategories[0].category || 'N/A';
+  }
+
+  const totalCategoriesEl = document.getElementById('totalCategories');
+  if (totalCategoriesEl && analytics.categoryDistribution) {
+    totalCategoriesEl.textContent = analytics.categoryDistribution.length;
+  }
+
+  // NEW: Update doctor approval metrics
+  const approvalRateEl = document.getElementById('approvalRate');
+  if (approvalRateEl && analytics.approvalRate !== undefined) {
+    approvalRateEl.textContent = analytics.approvalRate + '%';
+  }
+
+  // NEW: Update approval stats if available
+  if (analytics.approvalStats) {
+    const approvedEl = document.getElementById('approvedCount');
+    const reviewedEl = document.getElementById('reviewedCount');
+    const pendingReviewEl = document.getElementById('pendingReviewCount');
+    const totalQuestionsEl = document.getElementById('totalQuestionsCount');
+    
+    if (approvedEl) approvedEl.textContent = analytics.approvalStats.approved.toLocaleString();
+    if (reviewedEl) reviewedEl.textContent = analytics.approvalStats.reviewed.toLocaleString();
+    if (pendingReviewEl) pendingReviewEl.textContent = analytics.approvalStats.pending_review.toLocaleString();
+    if (totalQuestionsEl) totalQuestionsEl.textContent = analytics.approvalStats.total.toLocaleString();
+  }
+
+  // Initialize charts
+  this.initUserGrowthChart(analytics.userGrowth);
+this.initQuestionVolumeChart(analytics.statusDistribution);
+  this.initCategoryDistributionChart(analytics.categoryDistribution);
+  this.initStatusDistributionChart(analytics.statusDistribution);
+  this.initMonthlyUsersChart(analytics.monthlyUsers);
+  this.initMonthlyQuestionsChart(analytics.monthlyQuestions);
+}
 
   initUserGrowthChart(data) {
     const ctx = document.getElementById('userGrowthChart');
@@ -1370,45 +1452,128 @@ class DashboardView {
     });
   }
 
-  initQuestionVolumeChart(questionData, answerData) {
-    const ctx = document.getElementById('questionVolumeChart');
-    if (!ctx || !questionData) return;
+initQuestionVolumeChart(statusDistribution) {
+  const ctx = document.getElementById('questionVolumeChart');
+  if (!ctx) return;
 
-    const labels = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-    }
+  // Clear previous chart if exists
+  if (ctx.chart) {
+    ctx.chart.destroy();
+    ctx.chart = null;
+  }
 
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Questions',
-            data: questionData,
-            backgroundColor: '#3b82f6'
-          },
-          {
-            label: 'Answers',
-            data: answerData || [],
-            backgroundColor: '#10b981'
-          }
+  // Extract counts from statusDistribution
+  const approvedCount = statusDistribution.find(s => s.status === 'approved')?.count || 0;
+  const pendingCount = statusDistribution.find(s => s.status === 'pending')?.count || 0;
+  const notApprovedCount = statusDistribution.find(s => s.status === 'not_approved')?.count || 0;
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Approved', 'Pending', 'Not Approved'],
+      datasets: [{
+        label: 'Questions by Doctor Approval Status',
+        data: [approvedCount, pendingCount, notApprovedCount],
+        backgroundColor: [
+          '#10b981', // Green for approved
+          '#f59e0b', // Orange for pending  
+          '#ef4444'  // Red for not approved
         ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
           }
         }
       }
-    });
+    }
+  });
+}
+
+// Helper method to fetch question volume by doctor_approval_status
+async fetchQuestionVolumeByApprovalStatus() {
+  try {
+    const approvedData = [];
+    const pendingData = [];
+    const notApprovedData = [];
+
+    // Fetch data for each day
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+
+      const response = await fetch(`api/getQuestionsByDate.php?date=${dateStr}`, { 
+        credentials: 'same-origin' 
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          approvedData.push(data.approved || 0);
+          pendingData.push(data.pending || 0);
+          notApprovedData.push(data.not_approved || 0);
+        }
+      }
+    }
+
+    return {
+      approved: approvedData,
+      pending: pendingData,
+      not_approved: notApprovedData
+    };
+  } catch (error) {
+    console.error('Error fetching approval status data:', error);
+    throw error;
   }
+}
+
+// Fallback method if the new API isn't available
+initQuestionVolumeChartFallback(questionData, answerData) {
+  const ctx = document.getElementById('questionVolumeChart');
+  if (!ctx || !questionData) return;
+
+  const labels = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+  }
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Questions',
+          data: questionData,
+          backgroundColor: '#3b82f6'
+        },
+        {
+          label: 'AI Answers',
+          data: answerData || [],
+          backgroundColor: '#10b981'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
 
   initCategoryDistributionChart(data) {
     const container = document.getElementById('categoryDistributionChart');
@@ -1452,8 +1617,8 @@ class DashboardView {
 
     const statusColors = {
       'pending': '#f59e0b',
-      'answered': '#10b981',
-      'closed': '#6b7280'
+      'approved': '#10b981',
+      'not_approved': '#6b7280'
     };
 
     new Chart(ctx, {
@@ -1523,6 +1688,46 @@ class DashboardView {
       }
     });
   }
+
+
+  initUserActivityChart() {
+  const chartContainer = document.querySelector('.chart-placeholder');
+  if (!chartContainer) return;
+  
+  chartContainer.innerHTML = '<canvas id="userActivityChart"></canvas>';
+  const ctx = document.getElementById('userActivityChart');
+  if (!ctx) return;
+  
+  if (ctx.chart) {
+    ctx.chart.destroy();
+    ctx.chart = null;
+  }
+  
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Questions', 'Answers', 'Users', 'Reviews'],
+      datasets: [{
+        data: [18, 18, 5, 7],
+        backgroundColor: [
+          '#2563eb',
+          '#10b981',
+          '#f59e0b',
+          '#8b5cf6'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+}
 
   updateSettings(settings) {
     if (!settings) return;
@@ -1611,16 +1816,161 @@ class DashboardView {
 }
 
 // Global functions for admin actions
-window.editUser = function (userId) {
-  MediQA.showNotification(
-    `Edit user ${userId} functionality would be implemented here`,
-    "info"
-  );
+// Global functions for admin actions
+window.editUser = async function (userId) {
+  // Show edit modal
+  const user = await getUserDetails(userId);
+  showEditUserModal(user);
 };
 
-window.suspendUser = function (userId) {
+window.suspendUser = async function (userId) {
   if (confirm("Are you sure you want to suspend this user?")) {
-    MediQA.showNotification(`User ${userId} suspended`, "success");
+    try {
+      const response = await fetch('api/suspendUser.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId }),
+        credentials: 'same-origin'
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        MediQA.showNotification(`User suspended successfully`, "success");
+        // Refresh user list
+        if (adminControllerInstance) {
+          adminControllerInstance.loadUsersData();
+        }
+      } else {
+        MediQA.showNotification(data.error || "Failed to suspend user", "error");
+      }
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      MediQA.showNotification("Failed to suspend user", "error");
+    }
+  }
+};
+
+// Helper function to get user details
+async function getUserDetails(userId) {
+  try {
+    const response = await fetch(`api/getUser.php?id=${userId}`, {
+      credentials: 'same-origin'
+    });
+    const data = await response.json();
+    return data.success ? data.user : null;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    return null;
+  }
+}
+
+// Function to show edit modal
+function showEditUserModal(user) {
+  if (!user) return;
+  
+  // Remove existing modal
+  const existingModal = document.querySelector('.modal-overlay');
+  if (existingModal) existingModal.remove();
+  
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay active";
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit User: ${user.name}</h3>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editUserForm">
+          <input type="hidden" name="user_id" value="${user.id}">
+          
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-input" name="name" value="${user.name}" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" name="email" value="${user.email}" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <select class="form-select" name="role">
+              <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+              <option value="doctor" ${user.role === 'doctor' ? 'selected' : ''}>Doctor</option>
+              <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="status">
+              <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="suspended" ${user.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitEditUserForm()">Save Changes</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+// Function to submit edit form
+window.submitEditUserForm = async function () {
+  const form = document.getElementById('editUserForm');
+  if (!form) return;
+  
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+  
+  console.log('Submitting user edit:', data);
+  
+  try {
+    const response = await fetch('api/editUser.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      credentials: 'same-origin'
+    });
+    
+    // DEBUG: Get response as text first
+    const responseText = await response.text();
+    console.log('Raw API response:', responseText);
+    
+    // Try to parse JSON
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON. Response was:', responseText);
+      MediQA.showNotification('Server returned invalid data. Check console.', 'error');
+      return;
+    }
+    
+    if (result.success) {
+      MediQA.showNotification("User updated successfully", "success");
+      document.querySelector('.modal-overlay')?.remove();
+      if (adminControllerInstance?.loadUsersData) {
+        setTimeout(() => adminControllerInstance.loadUsersData(), 500);
+      }
+    } else {
+      MediQA.showNotification(result.error || "Failed to update user", "error");
+    }
+  } catch (error) {
+    console.error('Network error:', error);
+    MediQA.showNotification("Network error - check console", "error");
   }
 };
 
@@ -1646,3 +1996,41 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
+
+window.activateUser = async function(userId, userName = '') {
+  const message = userName 
+    ? `Are you sure you want to activate user "${userName}"?`
+    : `Are you sure you want to activate user ID: ${userId}?`;
+  
+  if (!confirm(message)) return;
+  
+  try {
+    MediQA.showNotification("Activating user...", "info");
+    
+    const response = await fetch('api/activateUser.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId }),
+      credentials: 'same-origin'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      MediQA.showNotification(`User activated successfully`, "success");
+      
+      // Refresh user list (this is enough)
+      if (adminControllerInstance && adminControllerInstance.loadUsersData) {
+        adminControllerInstance.loadUsersData();
+      }
+      
+      // REMOVE THIS LINE:
+      // updateUserRowStatus(userId, 'active');
+    } else {
+      MediQA.showNotification(data.error || "Failed to activate user", "error");
+    }
+  } catch (error) {
+    console.error('Error activating user:', error);
+    MediQA.showNotification("Failed to activate user", "error");
+  }
+};

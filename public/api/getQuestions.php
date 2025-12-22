@@ -14,16 +14,17 @@ try {
     // Build query with optional filters
     $whereConditions = [];
     $params = [];
-
-    if (isset($_GET['status']) && !empty($_GET['status'])) {
-        $whereConditions[] = "q.status = :status";
-        $params[':status'] = $_GET['status'];
+// In the WHERE conditions section of getQuestions.php, add:
+if (isset($_GET['doctor_approval_status']) && !empty($_GET['doctor_approval_status'])) {
+    $statusValue = $_GET['doctor_approval_status'];
+    if ($statusValue === 'pending') {
+        // Include both NULL and 'pending' values
+        $whereConditions[] = "(q.doctor_approval_status IS NULL OR q.doctor_approval_status = 'pending')";
+    } else {
+        $whereConditions[] = "q.doctor_approval_status = :doctor_approval_status";
+        $params[':doctor_approval_status'] = $statusValue;
     }
-
-    if (isset($_GET['category']) && !empty($_GET['category'])) {
-        $whereConditions[] = "q.category = :category";
-        $params[':category'] = $_GET['category'];
-    }
+}
 
     $whereClause = !empty($whereConditions) ? "WHERE " . implode(" AND ", $whereConditions) : "";
 

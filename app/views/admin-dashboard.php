@@ -424,11 +424,11 @@
         </div>
 
         <div class="filter-bar" style="margin-bottom: 1.5rem;">
-          <select id="forumStatusFilter" class="filter-select" style="max-width: 200px;">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="answered">Answered</option>
-            <option value="closed">Closed</option>
+          <select id="forumStatusFilter" class="filter-select">
+            <option value="">All Approval Status</option>
+            <option value="pending">Pending Review</option>
+            <option value="approved">Approved</option>
+            <option value="not_approved">Not Approved</option>
           </select>
           <select id="forumCategoryFilter" class="filter-select" style="max-width: 200px;">
             <option value="">All Categories</option>
@@ -540,6 +540,38 @@
                 <div class="metric-item">
                   <div class="metric-label">Total Categories</div>
                   <div class="metric-value" id="totalCategories">-</div>
+
+                  <!-- Doctor Approval Analytics Section -->
+<div class="analytics-card full-width">
+  <div class="analytics-card-header">
+    <h3>Doctor Approval Analytics</h3>
+  </div>
+  <div class="analytics-card-body">
+    <div class="metrics-grid">
+      <div class="metric-item">
+        <div class="metric-label">Doctor Approval Rate</div>
+        <div class="metric-value" id="approvalRate">-</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-label">Approved by Doctors</div>
+        <div class="metric-value" id="approvedCount">-</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-label">Reviewed by Doctors</div>
+        <div class="metric-value" id="reviewedCount">-</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-label">Pending Doctor Review</div>
+        <div class="metric-value" id="pendingReviewCount">-</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-label">Total Questions</div>
+        <div class="metric-value" id="totalQuestionsCount">-</div>
+      </div>
+     
+    </div>
+  </div>
+</div>
                 </div>
               </div>
             </div>
