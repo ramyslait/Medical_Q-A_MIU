@@ -108,9 +108,6 @@ class ForumModel {
         category: q.category || "general",
         preview: q.preview || q.body,
         author: authorName,
-        authorAvatar: `https://via.placeholder.com/50/2563eb/ffffff?text=${encodeURIComponent(
-          initials || "U"
-        )}`,
         replies: q.replies || 0,
         views: q.views || 0,
         lastActivity: q.time_ago || "",

@@ -1,11 +1,16 @@
 <?php
 require_once __DIR__ . '/../../config/db.php';
 
-header('Content-Type: application/json');
+// Set UTF-8 headers
+header('Content-Type: application/json; charset=utf-8');
 
 try {
     $conn = Database::getConnection();
-
+    
+    // FORCE UTF-8 encoding on the connection
+    $conn->exec("SET NAMES 'utf8mb4'");
+    $conn->exec("SET CHARACTER SET utf8mb4");
+    
     // Build query with optional filters
     $whereConditions = [];
     $params = [];
@@ -52,36 +57,41 @@ try {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $questions = array_map(function ($q) {
+        // Ensure all string fields are UTF-8 encoded
         return [
             'id' => $q['id'],
-            'title' => $q['title'],
-            'body' => $q['body'],
+            'title' => mb_convert_encoding($q['title'] ?? '', 'UTF-8', 'UTF-8'),
+            'body' => mb_convert_encoding($q['body'] ?? '', 'UTF-8', 'UTF-8'),
             'category' => $q['category'],
             'status' => $q['status'],
             'created_at' => $q['created_at'],
-            'ai_answer' => $q['ai_answer'],
+            'ai_answer' => mb_convert_encoding($q['ai_answer'] ?? '', 'UTF-8', 'UTF-8'),
             'doctor_approval_status' => $q['doctor_approval_status'] ?? 'pending',
-            'doctor_answer' => $q['doctor_answer'],
-            'doctor_comment' => $q['doctor_comment'],
+            'doctor_answer' => mb_convert_encoding($q['doctor_answer'] ?? '', 'UTF-8', 'UTF-8'),
+            'doctor_comment' => mb_convert_encoding($q['doctor_comment'] ?? '', 'UTF-8', 'UTF-8'),
             'doctor_reviewed_at' => $q['doctor_reviewed_at'],
-            'doctor_name' => $q['doctor_name'],
+            'doctor_name' => mb_convert_encoding($q['doctor_name'] ?? '', 'UTF-8', 'UTF-8'),
             'doctor_id' => $q['doctor_id'],
-            'user_name' => $q['user_name'],
+            'user_name' => mb_convert_encoding($q['user_name'] ?? '', 'UTF-8', 'UTF-8'),
             'user_email' => $q['user_email'],
-            'preview' => substr($q['body'], 0, 100) . (strlen($q['body']) > 100 ? '...' : ''),
+            'preview' => mb_substr(mb_convert_encoding($q['body'] ?? '', 'UTF-8', 'UTF-8'), 0, 100) . 
+                         (mb_strlen($q['body'] ?? '') > 100 ? '...' : ''),
             'time_ago' => timeAgo($q['created_at'])
         ];
     }, $rows);
 
+    // Use JSON_UNESCAPED_UNICODE to preserve Arabic characters
     echo json_encode([
         'success' => true,
         'questions' => $questions,
-    ]);
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
         "success" => false,
         "error" => $e->getMessage()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }
 
 function timeAgo($datetime) {

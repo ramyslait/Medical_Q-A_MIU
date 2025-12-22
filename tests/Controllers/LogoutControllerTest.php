@@ -5,7 +5,7 @@ namespace Tests\Controllers;
 use Tests\TestCase;
 
 /**
- * Test suite for logoutController.php and logout.php
+ * Test suite for logoutController.php 
  * 
  * Tests logout functionality including:
  * - Session destruction
